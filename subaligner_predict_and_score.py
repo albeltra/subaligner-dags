@@ -81,7 +81,7 @@ with DAG(
               "-m",
               "single",
               "-s",
-              ":embedded:stream_index=" + "{{ task_instance.xcom_pull(task_ids='inspect_file', key='return_value')['STREAM_INDEX'] }}",
+              "embedded:stream_index=" + "{{ task_instance.xcom_pull(task_ids='inspect_file', key='return_value')['STREAM_INDEX'] }}",
               "-c",
               "{{ task_instance.xcom_pull(task_ids='inspect_file', key='return_value')['AUDIO_CHANNEL'] }}",
               "-v",
