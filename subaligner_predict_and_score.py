@@ -127,3 +127,4 @@ with DAG(
                   "COLLECTION": "predictions"},
         do_xcom_push=True
     )
+    inspect_file >> predict_and_score >> send_results_to_db
