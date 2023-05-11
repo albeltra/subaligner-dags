@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 
 from airflow import DAG
 from airflow.configuration import conf
@@ -82,7 +83,7 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="inspect_file",
-        env_vars={'MEDIA_PATH': "{{ task_instance.xcom_pull(task_ids='inspect_file', key='return_value')['MEDIA_PATH'] }}"},
+        env_vars={'MEDIA_PATH': "/shared/" + Path("""{{ dag_run.conf['MEDIA_PATH'] }}""").name},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
