@@ -40,7 +40,7 @@ with DAG(
         namespace=namespace,
         # Pod configuration
         # name the Pod
-        name="subaligner_inspect_file",
+        name="inspect_file",
         env_vars={'MEDIA_PATH': """"{{ dag_run.conf['MEDIA_PATH'] }}"""},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
@@ -58,7 +58,7 @@ with DAG(
     )
     predict_and_score = KubernetesPodOperator(
         # unique id of the task within the DAG
-        task_id="subaligner_predict_and_score",
+        task_id="predict_and_score",
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-predictor",
         # launch the Pod on the same cluster as Airflow is running on
@@ -67,7 +67,7 @@ with DAG(
         namespace=namespace,
         # Pod configuration
         # name the Pod
-        name="subaligner_predict_and_score",
+        name="predict_and_score",
         cmds=["python3",
               "/scripts/predict.py",
               "-m",
