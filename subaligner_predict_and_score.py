@@ -69,7 +69,7 @@ with DAG(
         # name the Pod
         name="subaligner_predict_and_score",
         cmds=["python3",
-              "predict.py",
+              "/scripts/predict.py",
               "-m",
               "single",
               "-s",
