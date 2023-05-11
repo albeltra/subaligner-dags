@@ -73,11 +73,11 @@ with DAG(
               "-m",
               "single",
               "-s",
-              ":embedded:stream_index=" + """{{ ti.xcom_pull(task_ids='inspec_file', key='STREAM_INDEX') }}""",
+              ":embedded:stream_index=" + """{{ ti.xcom_pull(task_ids='inspect_file', key='STREAM_INDEX') }}""",
               "-c",
-              """{{ ti.xcom_pull(task_ids='inspec_file', key='AUDIO_CHANNEL') }}""",
+              """{{ ti.xcom_pull(task_ids='inspect_file', key='AUDIO_CHANNEL') }}""",
               "-v",
-              conf.get('media_path')],
+              """{{ ti.xcom_pull(task_ids='inspect_file', key='MEDIA_PATH') }}"""],
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
