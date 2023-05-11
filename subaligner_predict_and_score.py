@@ -22,6 +22,10 @@ affinity = k8s.V1Affinity(
             )
     )
 
+volume_names = ["movies", "movies-4k", "tv"]
+volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
+volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
+
 # instantiate the DAG
 with DAG(
     start_date=datetime(2023, 5, 3),
@@ -38,6 +42,8 @@ with DAG(
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
         namespace=namespace,
+        volumes=volumes,
+        volume_mounts=volume_mounts,
         # Pod configuration
         # name the Pod
         name="inspect_file",
@@ -65,6 +71,8 @@ with DAG(
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
         namespace=namespace,
+        volumes=volumes,
+        volume_mounts=volume_mounts,
         # Pod configuration
         # name the Pod
         name="predict_and_score",
