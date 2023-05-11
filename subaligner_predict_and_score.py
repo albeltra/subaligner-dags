@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from airflow import DAG
 from airflow.configuration import conf
 from airflow.kubernetes.secret import Secret
@@ -22,7 +24,7 @@ affinity = k8s.V1Affinity(
 
 # instantiate the DAG
 with DAG(
-    start_date=None,
+    start_date=datetime(2023, 5, 3),
     catchup=False,
     schedule=None,
     dag_id="Align_and_Score_New_Media",
