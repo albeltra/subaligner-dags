@@ -39,7 +39,7 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="subaligner_inspect_file",
-        env_vars={'MEDIA_PATH', conf.get('MEDIA_PATH')},
+        env_vars={'MEDIA_PATH', conf.get(key='MEDIA_PATH')},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # attach labels to the Pod, can be used for grouping
