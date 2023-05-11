@@ -55,8 +55,10 @@ with DAG(
         # name the Pod
         name="stage_file",
         cmds=["cp",
+              "--parents",
+              "-u",
               """{{ dag_run.conf['MEDIA_PATH'] }}""",
-              "/shared/"],
+              "/shared"],
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
@@ -83,7 +85,7 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="inspect_file",
-        env_vars={'MEDIA_PATH': "/shared/" + Path("""{{ dag_run.conf['MEDIA_PATH'] }}""").name},
+        env_vars={'MEDIA_PATH': "/shared" + Path("""{{ dag_run.conf['MEDIA_PATH'] }}""").name},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
