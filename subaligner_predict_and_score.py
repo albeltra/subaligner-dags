@@ -45,6 +45,7 @@ with DAG(
         task_id="stage_file",
         # the Docker image to launch
         image="alpine",
+        image_pull_policy="IfNotPresent",
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
@@ -85,7 +86,7 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="inspect_file",
-        env_vars={'MEDIA_PATH': "/shared" + Path("""{{ dag_run.conf['MEDIA_PATH'] }}""").name},
+        env_vars={'MEDIA_PATH': "/shared" + """{{ dag_run.conf['MEDIA_PATH'] }}"""},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
@@ -159,13 +160,19 @@ with DAG(
         log_events_on_failure=True,
         secrets=secrets,
         # pass your name as an environment var
-        env_vars={"SUBALIGNER_Accuracy": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Accuracy') }}""",
-                  "SUBALIGNER_Loss": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Loss') }}""",
-                  "SUBALIGNER_Shift": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Shift') }}""",
-                  "SUBALIGNER_Type": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Type') }}""",
+        env_vars={"SUBALIGNER_loss": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_loss') }}""",
+                  "SUBALIGNER_time_load_dataset": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_time_load_dataset') }}""",
+                  "SUBALIGNER_audio_file_path": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_audio_file_path') }}""",
+                  "SUBALIGNER_video_file_path": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_video_file_path') }}""",
+                  "SUBALIGNER_subtitle_file_path": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_subtitle_file_path') }}""",
+                  "SUBALIGNER_time_load_dataset": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_time_load_dataset') }}""",
+                  "SUBALIGNER_X_shape": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_X_shape') }}""",
+                  "SUBALIGNER_time_predictions": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_time_predictions') }}""",
+                  "SUBALIGNER_seconds_to_shift": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_seconds_to_shift') }}""",
+                  "SUBALIGNER_original_start": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_original_start') }}""",
                   "SUBALIGNER_Duration": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Duration') }}""",
                   "SUBALIGNER_Extension": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Extension') }}""",
-                  "SUBALIGNER_Codec": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Codec') }}""",
+                  # "SUBALIGNER_Codec": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Codec') }}""",
                   "MONGO_HOST": "subaligner-analytics-mongodb",
                   "DB": "data",
                   "COLLECTION": "predictions"},
