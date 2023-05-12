@@ -162,30 +162,30 @@ with DAG(
         log_events_on_failure=True,
         secrets=secrets,
         # pass your name as an environment var
-        cmds=["python", "/scripts/send_to_db.py",
-              "-SUBALIGNER_loss",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_loss'] }}",
-              "-SUBALIGNER_video_file_path",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_video_file_path'] }}",
-              "-SUBALIGNER_subtitle_file_path",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_subtitle_file_path'] }}",
-              "-SUBALIGNER_time_load_dataset",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_load_dataset'] }}",
-              "-SUBALIGNER_X_shape",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_X_shape'] }}",
-              "-SUBALIGNER_time_predictions",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_predictions'] }}",
-              "-SUBALIGNER_seconds_to_shift",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_seconds_to_shift'] }}",
-              "-SUBALIGNER_original_start",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_original_start'] }}",
-              "-SUBALIGNER_time_sync",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_sync'] }}",
-              "-SUBALIGNER_Extension",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_Extension'] }}",
-              "-MONGO_HOST", "subaligner-analytics-mongodb",
-              "-DB", "data",
-              "-COLLECTION", "predictions"],
+        env_vars={"SUBALIGNER_loss":
+                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_loss'] }}",
+                  "SUBALIGNER_video_file_path":
+                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')["
+                  "'SUBALIGNER_video_file_path'] }}",
+                  "SUBALIGNER_subtitle_file_path":
+                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_subtitle_file_path'] }}",
+                  "SUBALIGNER_time_load_dataset":
+                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_load_dataset'] }}",
+                  "SUBALIGNER_X_shape":
+                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_X_shape'] }}",
+                  "SUBALIGNER_time_predictions":
+                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_predictions'] }}",
+                  "SUBALIGNER_seconds_to_shift":
+                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_seconds_to_shift'] }}",
+                  "SUBALIGNER_original_start":
+                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_original_start'] }}",
+                  "SUBALIGNER_time_sync":
+                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_sync'] }}",
+                  "SUBALIGNER_Extension":
+                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_Extension'] }}",
+                  "MONGO_HOST": "subaligner-analytics-mongodb",
+                  "DB": "data",
+                  "COLLECTION": "predictions"},
         do_xcom_push=True
     )
     stage_file >> inspect_file >> predict_and_score >> send_results_to_db
