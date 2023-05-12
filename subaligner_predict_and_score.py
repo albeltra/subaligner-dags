@@ -17,13 +17,13 @@ name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 affinity = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
-        k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+        k8s.V1PreferredSchedulingTerm(weight=3, preference=k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.1"])])
         ),
-        k8s.V1PreferredSchedulingTerm(weight=100, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+        k8s.V1PreferredSchedulingTerm(weight=2, preference=k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.2"])])
         ),
-        k8s.V1PreferredSchedulingTerm(weight=100, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+        k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.3"])])
         )
     ]
