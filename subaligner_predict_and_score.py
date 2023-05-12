@@ -148,4 +148,4 @@ with DAG(
                   "COLLECTION": "predictions"},
         do_xcom_push=True
     )
-    stage_file >> inspect_file >> predict_and_score >> send_results_to_db
+    inspect_file >> predict_and_score >> send_results_to_db
