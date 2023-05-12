@@ -27,13 +27,6 @@ volume_names = ["movies", "movies-4k", "tv"]
 volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
 volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
-persistent_volumes = [k8s.V1Volume(name="shared-media",
-                                   persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(
-                                       claim_name="shared-media"))]
-
-persistent_volume_mounts = [
-    k8s.V1VolumeMount(name="shared-media", mount_path="/shared", sub_path=None, read_only=False)]
-
 # instantiate the DAG
 with DAG(
         start_date=datetime(2023, 5, 3),
@@ -41,39 +34,6 @@ with DAG(
         schedule=None,
         dag_id="Align_and_Score_New_Media",
 ) as dag:
-    stage_file = KubernetesPodOperator(
-        affinity=affinity,
-        # unique id of the task within the DAG
-        task_id="stage_file",
-        # the Docker image to launch
-        image="alpine",
-        image_pull_policy="IfNotPresent",
-        # launch the Pod on the same cluster as Airflow is running on
-        in_cluster=True,
-        # launch the Pod in the same namespace as Airflow is running in
-        namespace=namespace,
-        volumes=volumes + persistent_volumes,
-        volume_mounts=volume_mounts + persistent_volume_mounts,
-        # Pod configuration
-        # name the Pod
-        name="stage_file",
-        cmds=["cp",
-              "--parents",
-              "-u",
-              """{{ dag_run.conf['MEDIA_PATH'] }}""",
-              "/shared"],
-        # give the Pod name a random suffix, ensure uniqueness in the namespace
-        random_name_suffix=True,
-        # reattach to worker instead of creating a new Pod on worker failure
-        reattach_on_restart=True,
-        # delete Pod after the task is finished
-        is_delete_operator_pod=True,
-        # get log stdout of the container as task logs
-        get_logs=True,
-        # log events in case of Pod failure
-        log_events_on_failure=True,
-        do_xcom_push=True
-    )
     inspect_file = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="inspect_file",
@@ -83,12 +43,12 @@ with DAG(
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
         namespace=namespace,
-        volumes=persistent_volumes,
-        volume_mounts=persistent_volume_mounts,
+        volumes=volumes,
+        volume_mounts=volume_mounts,
         # Pod configuration
         # name the Pod
         name="inspect_file",
-        env_vars={'MEDIA_PATH': "/shared" + """{{ dag_run.conf['MEDIA_PATH'] }}"""},
+        env_vars={'MEDIA_PATH': """{{ dag_run.conf['MEDIA_PATH'] }}"""},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
@@ -110,8 +70,8 @@ with DAG(
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
         namespace=namespace,
-        volumes=persistent_volumes,
-        volume_mounts=persistent_volume_mounts,
+        volumes=volumes,
+        volume_mounts=volume_mounts,
         # Pod configuration
         # name the Pod
         name="predict_and_score",
