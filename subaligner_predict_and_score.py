@@ -17,7 +17,7 @@ name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 affinity = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
-        k8s.V1PreferredSchedulingTerm(weight=3, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+        k8s.V1PreferredSchedulingTerm(weight=0, preference=k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.1"])])
         ),
         k8s.V1PreferredSchedulingTerm(weight=2, preference=k8s.V1NodeSelectorTerm(match_expressions=[
@@ -44,6 +44,7 @@ with DAG(
     inspect_file = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="inspect_file",
+        affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-inspector",
         # launch the Pod on the same cluster as Airflow is running on
@@ -71,6 +72,7 @@ with DAG(
     predict_and_score = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="predict_and_score",
+        affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-predictor",
         # launch the Pod on the same cluster as Airflow is running on
@@ -108,6 +110,7 @@ with DAG(
     send_results_to_db = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="send_results_to_db",
+        affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-send-to-db",
         # launch the Pod on the same cluster as Airflow is running on
