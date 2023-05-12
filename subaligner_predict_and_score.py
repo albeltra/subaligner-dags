@@ -170,7 +170,7 @@ with DAG(
               "-SUBALIGNER_subtitle_file_path",
               "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_subtitle_file_path'] }}",
               "-SUBALIGNER_time_load_dataset",
-              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER__time_load_dataset] }}",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_load_dataset'] }}",
               "-SUBALIGNER_X_shape",
               "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_X_shape'] }}",
               "-SUBALIGNER_time_predictions",
