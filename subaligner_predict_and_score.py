@@ -20,7 +20,7 @@ affinity = k8s.V1Affinity(
         k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.1"])])
         ),
-        k8s.V1PreferredSchedulingTerm(weight=200, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+        k8s.V1PreferredSchedulingTerm(weight=100, preference=k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.2"])])
         ),
         k8s.V1PreferredSchedulingTerm(weight=100, preference=k8s.V1NodeSelectorTerm(match_expressions=[
