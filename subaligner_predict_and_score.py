@@ -146,7 +146,7 @@ with DAG(
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
-        namespace=namespace,
+        namespace="default",
         # Pod configuration
         # name the Pod
         name="send_results_to_db",
