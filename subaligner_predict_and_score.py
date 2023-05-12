@@ -17,27 +17,29 @@ name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 affinity = k8s.V1Affinity(
     node_affinity=k8s.V1NodeSelector(
-            k8s.V1NodeSelectorTerm(match_expressions=[
-                k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.1"])]
-                )
-            )
+        k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.1"])]
+        )
     )
+)
 
 volume_names = ["movies", "movies-4k", "tv"]
 volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
 volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
 persistent_volumes = [k8s.V1Volume(name="shared-media",
-                                   persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name="shared-media"))]
+                                   persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(
+                                       claim_name="shared-media"))]
 
-persistent_volume_mounts = [k8s.V1VolumeMount(name="shared-media", mount_path="/shared", sub_path=None, read_only=False)]
+persistent_volume_mounts = [
+    k8s.V1VolumeMount(name="shared-media", mount_path="/shared", sub_path=None, read_only=False)]
 
 # instantiate the DAG
 with DAG(
-    start_date=datetime(2023, 5, 3),
-    catchup=False,
-    schedule=None,
-    dag_id="Align_and_Score_New_Media",
+        start_date=datetime(2023, 5, 3),
+        catchup=False,
+        schedule=None,
+        dag_id="Align_and_Score_New_Media",
 ) as dag:
     stage_file = KubernetesPodOperator(
         affinity=affinity,
@@ -160,20 +162,32 @@ with DAG(
         log_events_on_failure=True,
         secrets=secrets,
         # pass your name as an environment var
-        env_vars={"SUBALIGNER_loss": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_loss')['SUBALIGNER_loss'] }}",
-                  "SUBALIGNER_time_load_dataset": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_time_load_dataset')['SUBALIGNER_time_load_dataset'] }}",
-                  "SUBALIGNER_audio_file_path": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_audio_file_path')['SUBALIGNER_audio_file_path'] }}",
-                  "SUBALIGNER_video_file_path": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_video_file_path')['SUBALIGNER_video_file_path'] }}",
-                  "SUBALIGNER_subtitle_file_path": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_subtitle_file_path')['SUBALIGNER_subtitle_file_path'] }}",
-                  "SUBALIGNER_time_load_dataset": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_time_load_dataset')['SUBALIGNER_time_load_dataset'] }}",
-                  "SUBALIGNER_X_shape": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_X_shape')['SUBALIGNER_X_shape'] }}",
-                  "SUBALIGNER_time_predictions": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_time_predictions')['SUBALIGNER_time_predictions'] }}",
-                  "SUBALIGNER_seconds_to_shift": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_seconds_to_shift')['SUBALIGNER_seconds_to_shift'] }}",
-                  "SUBALIGNER_original_start": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_original_start')['SUBALIGNER_original_start'] }}",
-                  "SUBALIGNER_Extension": "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Extension')['SUBALIGNER_Extension'] }}",
-                  "MONGO_HOST": "subaligner-analytics-mongodb",
-                  "DB": "data",
-                  "COLLECTION": "predictions"},
+        cmds=["python", "/scripts/send_to_db.py",
+              "-SUBALIGNER_loss",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_loss')['SUBALIGNER_loss'] }}",
+              "-SUBALIGNER_time_load_dataset",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_time_load_dataset')['SUBALIGNER_time_load_dataset'] }}",
+              "-SUBALIGNER_audio_file_path",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_audio_file_path')['SUBALIGNER_audio_file_path'] }}",
+              "-SUBALIGNER_video_file_path",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_video_file_path')['SUBALIGNER_video_file_path'] }}",
+              "-SUBALIGNER_subtitle_file_path",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_subtitle_file_path')['SUBALIGNER_subtitle_file_path'] }}",
+              "-SUBALIGNER_time_load_dataset",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_time_load_dataset')['SUBALIGNER_time_load_dataset'] }}",
+              "-SUBALIGNER_X_shape",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_X_shape')['SUBALIGNER_X_shape'] }}",
+              "-SUBALIGNER_time_predictions",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_time_predictions')['SUBALIGNER_time_predictions'] }}",
+              "-SUBALIGNER_seconds_to_shift",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_seconds_to_shift')['SUBALIGNER_seconds_to_shift'] }}",
+              "SUBALIGNER_original_start",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_original_start')['SUBALIGNER_original_start'] }}",
+              "-SUBALIGNER_Extension",
+              "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Extension')['SUBALIGNER_Extension'] }}",
+              "-MONGO_HOST", "subaligner-analytics-mongodb",
+              "-DB", "data",
+              "-COLLECTION", "predictions"],
         do_xcom_push=True
     )
     stage_file >> inspect_file >> predict_and_score >> send_results_to_db
