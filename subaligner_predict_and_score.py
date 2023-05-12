@@ -170,7 +170,7 @@ with DAG(
                   "SUBALIGNER_time_predictions": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_time_predictions') }}""",
                   "SUBALIGNER_seconds_to_shift": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_seconds_to_shift') }}""",
                   "SUBALIGNER_original_start": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_original_start') }}""",
-                  "SUBALIGNER_Duration": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Duration') }}""",
+                  # "SUBALIGNER_Duration": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Duration') }}""",
                   "SUBALIGNER_Extension": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Extension') }}""",
                   # "SUBALIGNER_Codec": """{{ ti.xcom_pull(task_ids='predict_and_score', key='SUBALIGNER_Codec') }}""",
                   "MONGO_HOST": "subaligner-analytics-mongodb",
