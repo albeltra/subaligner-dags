@@ -1,12 +1,9 @@
 from datetime import datetime
-from pathlib import Path
 
 from airflow import DAG
 from airflow.configuration import conf
 from airflow.kubernetes.secret import Secret
-from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import (
-    KubernetesPodOperator,
-)
+from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
 from kubernetes.client import models as k8s
 
 # get the current Kubernetes namespace Airflow is running in
