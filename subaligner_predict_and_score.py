@@ -38,6 +38,7 @@ with DAG(
         catchup=False,
         schedule=None,
         dag_id="Align_and_Score_New_Media",
+        render_template_as_native_obj=True
 ) as dag:
     inspect_file = KubernetesPodOperator(
         # unique id of the task within the DAG
