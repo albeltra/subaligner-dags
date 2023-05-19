@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 
 from airflow import DAG
 from airflow.configuration import conf
@@ -53,7 +54,7 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="inspect_file",
-        env_vars={'MEDIA_PATH': """{{ dag_run.conf['MEDIA_PATH'] }}"""},
+        env_vars=json.loads("""{{ dag_run.conf }}"""),
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
@@ -153,6 +154,7 @@ with DAG(
                   "MONGO_HOST": "subaligner-analytics-mongodb",
                   "DB": "data",
                   "COLLECTION": "predictions"},
+
         do_xcom_push=True
     )
     inspect_file >> predict_and_score >> send_results_to_db
