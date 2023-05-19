@@ -54,7 +54,7 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="inspect_file",
-        env_vars=" {{ params }} ",
+        env_vars=""" {{ dict((k,v) for k,v in dag_run.conf)}} """,
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
