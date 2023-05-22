@@ -55,7 +55,12 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="inspect_file",
-        env_vars={"CONF": """" {{ dag_run.conf }}"""}, 
+        env_vars={"MEDIA_PATH": """" {{ dag_run.conf['MEDIA_PATH'] }}""",
+                  "movie": """" {{ dag_run.conf.get('movie') }}""",
+                  "series": """" {{ dag_run.conf.get('series') }}""",
+                  "episodes": """" {{ dag_run.conf.get('episodes') }}""",
+                  "episodeFile": """" {{ dag_run.conf.get('episodeFile') }}""",
+                  "release": """" {{ dag_run.conf.get(release') }}"""},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
@@ -83,6 +88,12 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="predict_and_score",
+        env_vars={"MEDIA_PATH": """" {{ dag_run.conf['MEDIA_PATH'] }}""",
+                  "movie": """" {{ dag_run.conf.get('movie') }}""",
+                  "series": """" {{ dag_run.conf.get('series') }}""",
+                  "episodes": """" {{ dag_run.conf.get('episodes') }}""",
+                  "episodeFile": """" {{ dag_run.conf.get('episodeFile') }}""",
+                  "release": """" {{ dag_run.conf.get(release') }}"""},
         cmds=["python3",
               "/scripts/predict.py",
               "-m",
