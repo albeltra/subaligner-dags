@@ -57,8 +57,8 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="inspect_file",
-        env_vars={"mediaFile": """" {{ dag_run.conf['mediaFile'] | b64encode }}""",
-                  "mediaInfo": """" {{ dag_run.conf.get('mediaInfo') | b64encode }}""",
+        env_vars={"mediaFile": """" {{ dag_run.conf['mediaFile'].encode('utf-8') | b64encode }}""",
+                  "mediaInfo": """" {{ dag_run.conf['mediaInfo'].encode('utf-8') | b64encode }}""",
                   "stream_index": """" {{ dag_run.conf.get('stream_index', '') }}""",
                   "audio_channel": """" {{ dag_run.conf.get('audio_channel', '') }}"""},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
