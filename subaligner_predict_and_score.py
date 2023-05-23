@@ -39,7 +39,7 @@ with DAG(
         catchup=False,
         schedule=None,
         dag_id="Align_and_Score_New_Media",
-        render_template_as_native_obj=True,
+        render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode}
 ) as dag:
     inspect_file = KubernetesPodOperator(
