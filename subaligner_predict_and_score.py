@@ -39,7 +39,7 @@ with DAG(
         catchup=False,
         schedule=None,
         dag_id="Align_and_Score_New_Media",
-        render_template_as_native_obj=True,
+        render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode}
 ) as dag:
     inspect_file = KubernetesPodOperator(
@@ -57,8 +57,8 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="inspect_file",
-        env_vars={"mediaFile": json.dumps("""{{dag_run.conf['mediaFile']}}"""),
-                  "mediaInfo": json.dumps("""{{dag_run.conf['mediaInfo']}}"""),
+        env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
+                  "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
                   "stream_index": """{{ dag_run.conf.get('stream_index', '') }}""",
                   "audio_channel": """{{ dag_run.conf.get('audio_channel', '') }}"""},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
@@ -88,8 +88,8 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="predict_and_score",
-        env_vars={"mediaFile": """{{ dag_run.conf['mediaFile']}}""",
-                  "mediaInfo": """{{ dag_run.conf.get('mediaInfo')}}"""},
+        env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
+                  "mediaInfo": """{{dag_run.conf.get('mediaInfo')}}"""},
         cmds=["python3",
               "/scripts/predict.py",
               "-m",
