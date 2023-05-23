@@ -57,10 +57,10 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="inspect_file",
-        env_vars={"mediaFile": """"{{dag_run.conf['mediaFile']}}""",
-                  "mediaInfo": """"{{dag_run.conf['mediaInfo']}}""",
-                  "stream_index": """"{{ dag_run.conf.get('stream_index', '') }}""",
-                  "audio_channel": """"{{ dag_run.conf.get('audio_channel', '') }}"""},
+        env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
+                  "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
+                  "stream_index": """{{ dag_run.conf.get('stream_index', '') }}""",
+                  "audio_channel": """{{ dag_run.conf.get('audio_channel', '') }}"""},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
@@ -88,8 +88,8 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="predict_and_score",
-        env_vars={"mediaFile": """" {{ dag_run.conf['mediaFile'] | b64encode}}""",
-                  "mediaInfo": """" {{ dag_run.conf.get('mediaInfo') | b64encode }}"""},
+        env_vars={"mediaFile": """{{ dag_run.conf['mediaFile']}}""",
+                  "mediaInfo": """{{ dag_run.conf.get('mediaInfo')}}"""},
         cmds=["python3",
               "/scripts/predict.py",
               "-m",
@@ -138,8 +138,8 @@ with DAG(
         log_events_on_failure=True,
         secrets=secrets,
         # pass your name as an environment var
-        env_vars={"mediaFile": """" {{ dag_run.conf['mediaFile'] }}""",
-                  "mediaInfo": """" {{ dag_run.conf.get('mediaInfo') }}""",
+        env_vars={"mediaFile": """{{ dag_run.conf['mediaFile']}}""",
+                  "mediaInfo": """{{ dag_run.conf.get('mediaInfo')}}""",
                   "SUBALIGNER_loss":
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_loss'] }}",
                   "SUBALIGNER_video_file_path":
