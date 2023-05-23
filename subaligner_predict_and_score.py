@@ -6,6 +6,7 @@ from airflow.configuration import conf
 from airflow.kubernetes.secret import Secret
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
 from kubernetes.client import models as k8s
+from base64 import b64encode
 
 # get the current Kubernetes namespace Airflow is running in
 namespace = conf.get("kubernetes", "NAMESPACE")
@@ -38,7 +39,8 @@ with DAG(
         catchup=False,
         schedule=None,
         dag_id="Align_and_Score_New_Media",
-        render_template_as_native_obj=True
+        render_template_as_native_obj=True,
+        user_defined_filters={"b64encode": b64encode}
 ) as dag:
     inspect_file = KubernetesPodOperator(
         # unique id of the task within the DAG
@@ -86,8 +88,8 @@ with DAG(
         # Pod configuration
         # name the Pod
         name="predict_and_score",
-        env_vars={"mediaFile": """" {{ dag_run.conf['mediaFile'] }}""",
-                  "mediaInfo": """" {{ dag_run.conf.get('mediaInfo') }}"""},
+        env_vars={"mediaFile": """" {{ dag_run.conf['mediaFile'] | b64encode}}""",
+                  "mediaInfo": """" {{ dag_run.conf.get('mediaInfo') | b64encode }}"""},
         cmds=["python3",
               "/scripts/predict.py",
               "-m",
