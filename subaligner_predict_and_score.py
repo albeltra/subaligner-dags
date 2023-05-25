@@ -24,6 +24,9 @@ affinity = k8s.V1Affinity(
         ),
         k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.3"])])
+        ),
+        k8s.V1PreferredSchedulingTerm(weight=3, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.6"])])
         )
     ]
     )
