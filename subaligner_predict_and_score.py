@@ -45,12 +45,12 @@ with DAG(
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode}
 ) as dag:
-    inspect_file = KubernetesPodOperator(
+    extract_audio = KubernetesPodOperator(
         # unique id of the task within the DAG
-        task_id="inspect_file",
+        task_id="extract_audio",
         affinity=affinity,
         # the Docker image to launch
-        image="beltranalex928/subaligner-airflow-inspector",
+        image="beltranalex928/subaligner-airflow-extract-audio",
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
@@ -59,7 +59,38 @@ with DAG(
         volume_mounts=volume_mounts,
         # Pod configuration
         # name the Pod
-        name="inspect_file",
+        name="extract_audio",
+        env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
+                  "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
+                  "stream_index": """{{ dag_run.conf.get('stream_index', '') }}""",
+                  "audio_channel": """{{ dag_run.conf.get('audio_channel', '') }}"""},
+        # give the Pod name a random suffix, ensure uniqueness in the namespace
+        random_name_suffix=True,
+        # reattach to worker instead of creating a new Pod on worker failure
+        reattach_on_restart=True,
+        # delete Pod after the task is finished
+        is_delete_operator_pod=True,
+        # get log stdout of the container as task logs
+        get_logs=True,
+        # log events in case of Pod failure
+        log_events_on_failure=True,
+        do_xcom_push=True
+    )
+    extract_subtitles = KubernetesPodOperator(
+        # unique id of the task within the DAG
+        task_id="extract_subtitles",
+        affinity=affinity,
+        # the Docker image to launch
+        image="beltranalex928/subaligner-airflow-extract-subtitles",
+        # launch the Pod on the same cluster as Airflow is running on
+        in_cluster=True,
+        # launch the Pod in the same namespace as Airflow is running in
+        namespace=namespace,
+        volumes=volumes,
+        volume_mounts=volume_mounts,
+        # Pod configuration
+        # name the Pod
+        name="extract_subtitles",
         env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
                   "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
                   "stream_index": """{{ dag_run.conf.get('stream_index', '') }}""",
@@ -170,4 +201,4 @@ with DAG(
 
         do_xcom_push=True
     )
-    inspect_file >> predict_and_score >> send_results_to_db
+    [extract_audio, extract_subtitles] >> predict_and_score >> send_results_to_db
