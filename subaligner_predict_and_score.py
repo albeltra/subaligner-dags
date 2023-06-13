@@ -20,7 +20,7 @@ volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, re
 volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
 volumes += [k8s.V1Volume(name="temp", host_path=k8s.V1HostPathVolumeSource(path="/TEMP-SUBS"))]
-volume_mounts += [k8s.V1VolumeMount(name="temp", mount_path="/TEMP-SUBS", sub_path=None, read_only=True)]
+volume_mounts += [k8s.V1VolumeMount(name="temp", mount_path="/TEMP-SUBS", sub_path=None, read_only=False)]
 
 
 # instantiate the DAG
@@ -48,8 +48,8 @@ with DAG(
         name="extract_audio",
         env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
                   "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
-                  "stream_index": """{{ dag_run.conf.get('stream_index', '') }}""",
-                  "audio_channel": """{{ dag_run.conf.get('audio_channel', '') }}"""},
+                  "stream_index": """{{dag_run.conf.get('stream_index', '')}}""",
+                  "audio_channel": """{{dag_run.conf.get('audio_channel', '')}}"""},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
@@ -78,8 +78,8 @@ with DAG(
         name="extract_subtitles",
         env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
                   "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
-                  "stream_index": """{{ dag_run.conf.get('stream_index', '') }}""",
-                  "audio_channel": """{{ dag_run.conf.get('audio_channel', '') }}"""},
+                  "stream_index": """{{dag_run.conf.get('stream_index', '')}}""",
+                  "audio_channel": """{{dag_run.conf.get('audio_channel', '')}}"""},
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
@@ -146,8 +146,8 @@ with DAG(
         log_events_on_failure=True,
         secrets=secrets,
         # pass your name as an environment var
-        env_vars={"mediaFile": """{{ dag_run.conf['mediaFile']}}""",
-                  "mediaInfo": """{{ dag_run.conf.get('mediaInfo')}}""",
+        env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
+                  "mediaInfo": """{{dag_run.conf.get('mediaInfo')}}""",
                   "SUBALIGNER_loss":
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_loss'] }}",
                   "SUBALIGNER_video_file_path":
