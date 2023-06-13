@@ -20,7 +20,8 @@ volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, re
 volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
 volumes += [k8s.V1Volume(name="TEMP-SUBS", host_path=k8s.V1HostPathVolumeSource(path="/TEMP-SUBS"))]
-volume_mounts += [k8s.V1Volume(name='TEMP-SUBS', host_path=k8s.V1HostPathVolumeSource(path="/TEMP-SUBS"))]
+volume_mounts += [k8s.V1VolumeMount(name="TEMP-SUBS", mount_path="/TEMP-SUBS", sub_path=None, read_only=True)]
+
 
 # instantiate the DAG
 with DAG(
@@ -107,16 +108,7 @@ with DAG(
         name="predict_and_score",
         env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
                   "mediaInfo": """{{dag_run.conf.get('mediaInfo')}}"""},
-        cmds=["python3",
-              "/scripts/predict.py",
-              "-m",
-              "single",
-              "-s",
-              "embedded:stream_index=" + "{{ task_instance.xcom_pull(task_ids='inspect_file', key='return_value')['STREAM_INDEX'] }}",
-              "-c",
-              "{{ task_instance.xcom_pull(task_ids='inspect_file', key='return_value')['AUDIO_CHANNEL'] }}",
-              "-v",
-              "{{ task_instance.xcom_pull(task_ids='inspect_file', key='return_value')['MEDIA_PATH'] }}"],
+        cmds=["python3", "/scripts/predict.py"],
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
