@@ -14,27 +14,13 @@ namespace = conf.get("kubernetes", "NAMESPACE")
 # set the name that will be printed
 name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
-affinity = k8s.V1Affinity(
-    node_affinity=k8s.V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
-        k8s.V1PreferredSchedulingTerm(weight=3, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.1"])])
-        ),
-        k8s.V1PreferredSchedulingTerm(weight=2, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.2"])])
-        ),
-        k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.3"])])
-        ),
-        k8s.V1PreferredSchedulingTerm(weight=3, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["10.253.2.6"])])
-        )
-    ]
-    )
-)
 
 volume_names = ["movies", "movies-4k", "tv"]
 volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
 volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
+
+volumes += [k8s.V1Volume(name="TEMP-SUBS", host_path=k8s.V1HostPathVolumeSource(path="/TEMP-SUBS"))]
+volume_mounts += [k8s.V1Volume(name='TEMP-SUBS', host_path=k8s.V1HostPathVolumeSource(path="/TEMP-SUBS"))]
 
 # instantiate the DAG
 with DAG(
@@ -48,7 +34,6 @@ with DAG(
     extract_audio = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="extract_audio",
-        affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-audio",
         # launch the Pod on the same cluster as Airflow is running on
@@ -79,7 +64,6 @@ with DAG(
     extract_subtitles = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="extract_subtitles",
-        affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-subtitles",
         # launch the Pod on the same cluster as Airflow is running on
@@ -110,7 +94,6 @@ with DAG(
     predict_and_score = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="predict_and_score",
-        affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-predictor",
         # launch the Pod on the same cluster as Airflow is running on
@@ -150,7 +133,6 @@ with DAG(
     send_results_to_db = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="send_results_to_db",
-        affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-send-to-db",
         # launch the Pod on the same cluster as Airflow is running on
