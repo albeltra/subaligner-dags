@@ -150,9 +150,6 @@ with DAG(
                   "mediaInfo": """{{dag_run.conf.get('mediaInfo')}}""",
                   "SUBALIGNER_loss":
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_loss'] }}",
-                  "SUBALIGNER_video_file_path":
-                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')["
-                  "'SUBALIGNER_video_file_path'] }}",
                   "SUBALIGNER_subtitle_file_path":
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_subtitle_file_path'] }}",
                   "SUBALIGNER_time_load_dataset":
