@@ -169,7 +169,7 @@ with DAG(
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_sync'] }}",
                   "SUBALIGNER_Extension":
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_Extension'] }}",
-                  "MONGO_HOST": "subaligner-analytics-mongodb",
+                  "MONGO_HOST": "subaligner-mongodb.subaligner.svc.cluster.local",
                   "DB": "data",
                   "COLLECTION": "predictions"},
 
