@@ -19,8 +19,8 @@ volume_names = ["movies", "movies-4k", "tv"]
 volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
 volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
-volumes += [k8s.V1Volume(name="TEMP-SUBS", host_path=k8s.V1HostPathVolumeSource(path="/TEMP-SUBS"))]
-volume_mounts += [k8s.V1VolumeMount(name="TEMP-SUBS", mount_path="/TEMP-SUBS", sub_path=None, read_only=True)]
+volumes += [k8s.V1Volume(name="temp", host_path=k8s.V1HostPathVolumeSource(path="/TEMP-SUBS"))]
+volume_mounts += [k8s.V1VolumeMount(name="temp", mount_path="/TEMP-SUBS", sub_path=None, read_only=True)]
 
 
 # instantiate the DAG
