@@ -30,7 +30,7 @@ with DAG(
         start_date=datetime(2023, 5, 3),
         catchup=False,
         schedule=None,
-        dag_id="Align_and_Score_New_Media",
+        dag_id="Align_and_Score_New_Media_Weighted", 
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode}
 ) as dag:
@@ -174,7 +174,7 @@ with DAG(
                   "DB": """{{dag_run.conf['database']}}""",
                   "COLLECTION": """{{dag_run.conf['collection']}}""",
                   "DATA_TYPE": """{{dag_run.conf['data_type']}}""",
-                  "WEIGHT": """{{dag_run.conf['weight']}}"""},  
+                  "WEIGHT": """{{dag_run.conf['weight']}}"""},
 
         do_xcom_push=True
     )
