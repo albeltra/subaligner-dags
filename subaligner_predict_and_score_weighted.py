@@ -47,7 +47,9 @@ with DAG(
         schedule=None,
         dag_id="Align_and_Score_New_Media_Weighted",
         render_template_as_native_obj=False,
-        user_defined_filters={"b64encode": b64encode}
+        user_defined_filters={"b64encode": b64encode},
+        concurrency=8,
+        max_active_runs=4
 ) as dag:
     extract_audio = KubernetesPodOperator(
         # unique id of the task within the DAG
