@@ -17,10 +17,10 @@ secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
 affinity = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
-        # k8s.V1PreferredSchedulingTerm(weight=4, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-        #     k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["192.168.10.10"])])
-        # ),
-        k8s.V1PreferredSchedulingTerm(weight=4, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+        k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["192.168.10.10"])])
+        ),
+        k8s.V1PreferredSchedulingTerm(weight=10, preference=k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="hostname", operator="In", values=["192.168.10.11"])])
         ),
         k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
