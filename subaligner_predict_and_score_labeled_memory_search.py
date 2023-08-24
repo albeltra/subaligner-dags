@@ -45,11 +45,10 @@ with DAG(
         start_date=datetime(2023, 5, 3),
         catchup=False,
         schedule=None,
-        dag_id="Align_and_Score_New_Media_Weighted",
+        dag_id="Align_and_Score_New_Media_Tenth",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode},
         concurrency=8,
-
         max_active_runs=4
 ) as dag:
     extract_audio = KubernetesPodOperator(
@@ -119,7 +118,7 @@ with DAG(
         task_id="predict_and_score",
         affinity=affinity,
         # the Docker image to launch
-        image="beltranalex928/subaligner-airflow-predictor:weighted",
+        image="beltranalex928/subaligner-airflow-predictor:labeled-memory-search",
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
