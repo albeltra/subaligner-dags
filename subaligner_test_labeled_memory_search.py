@@ -171,4 +171,4 @@ with DAG(
 
         do_xcom_push=True
     )
-    extract_audio >> predict_and_score >> send_results_to_db
+    predict_and_score >> send_results_to_db
