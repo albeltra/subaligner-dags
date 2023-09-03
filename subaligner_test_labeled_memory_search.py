@@ -37,7 +37,7 @@ volumes = [k8s.V1Volume(name=y, nfs=k8s.V1NFSVolumeSource(path=x, server=server,
 volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None) for x in path_names]
 
 volumes += [k8s.V1Volume(name="data", nfs=k8s.V1NFSVolumeSource(path="/mnt/user/subaligner-data", server=server, read_only=True))]
-volume_mounts += [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None)] 
+volume_mounts += [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None)]
 
 volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1NFSVolumeSource(path="/mnt/user/subaligner-audio-subs", server=server, read_only=True))]
 volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None)]
