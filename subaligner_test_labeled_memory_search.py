@@ -45,7 +45,7 @@ with DAG(
         start_date=datetime(2023, 5, 3),
         catchup=False,
         schedule=None,
-        dag_id="Align_and_Score_New_Media_Labeled_Memory_Search",
+        dag_id="Test_Labeled_Memory_Search",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode},
         concurrency=8,
@@ -168,4 +168,4 @@ with DAG(
 
         do_xcom_push=True
     )
-    extract_audio >> predict_and_score >> send_results_to_db 
+    extract_audio >> predict_and_score >> send_results_to_db
