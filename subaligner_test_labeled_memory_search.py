@@ -88,6 +88,7 @@ with DAG(
         affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-predictor:test-labeled-memory-search",
+        image_pull_policy="Always",
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
