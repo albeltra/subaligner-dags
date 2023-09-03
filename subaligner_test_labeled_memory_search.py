@@ -87,7 +87,7 @@ with DAG(
         task_id="predict_and_score",
         affinity=affinity,
         # the Docker image to launch
-        image="beltranalex928/subaligner-airflow-predictor:labeled-memory-search",
+        image="beltranalex928/subaligner-airflow-predictor:test-labeled-memory-search",
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
