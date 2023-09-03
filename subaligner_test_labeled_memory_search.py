@@ -30,15 +30,17 @@ affinity = k8s.V1Affinity(
     )
 )
 
-volume_names = ["movies", "movies-4k", "tv"]
-volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
-volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
+server = "192.168.10.1"
+paths = ["/mnt/user/Media/Movies", "/mnt/user/Media/Movies-4K", "/mnt/user/Media/TV"]
+path_names = ["movies", "movies-4k", "tv"]
+volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None) for x in path_names]
+volumes = [k8s.V1Volume(name=x, nfs=k8s.V1NFSVolumeSource(path="/" + x), server=server, read_only=True) for x in paths]
 
-volumes += [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data"))]
-volume_mounts += [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
+volumes += [k8s.V1Volume(name="data", nfs=k8s.V1NFSVolumeSource(path="/mnt/user/subaligner-data", server=server, read_only=False))]
+volume_mounts += [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None)]
 
-volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/audio-subs"))]
-volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None, read_only=False)]
+volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/mnt/user/subaligner-audio-subs", server=server, read_only=False))]
+volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None)]
 
 # instantiate the DAG
 with DAG(
