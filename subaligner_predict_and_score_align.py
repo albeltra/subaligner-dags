@@ -31,7 +31,7 @@ with DAG(
         catchup=False,
         schedule=None,
         concurrency=8,
-        max_active_runs=4, 
+        max_active_runs=4,
         dag_id="Align_and_Score_New_Media_Align",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode}
@@ -100,7 +100,8 @@ with DAG(
         # unique id of the task within the DAG
         task_id="predict_and_score",
         # the Docker image to launch
-        image="beltranalex928/subaligner-airflow-predictor",
+        image="beltranalex928/subaligner-airflow-predictor:align",
+        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
