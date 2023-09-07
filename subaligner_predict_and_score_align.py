@@ -30,7 +30,7 @@ with DAG(
         start_date=datetime(2023, 5, 3),
         catchup=False,
         schedule=None,
-        concurrency=8,
+        concurrency=4, 
         max_active_runs=4,
         dag_id="Align_and_Score_New_Media_Align",
         render_template_as_native_obj=False,
