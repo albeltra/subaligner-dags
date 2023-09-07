@@ -30,7 +30,7 @@ with DAG(
         start_date=datetime(2023, 5, 3),
         catchup=False,
         schedule=None,
-        concurrency=4, 
+        concurrency=4,
         max_active_runs=4,
         dag_id="Align_and_Score_New_Media_Align",
         render_template_as_native_obj=False,
@@ -116,7 +116,8 @@ with DAG(
                   "MONGO_HOST": "subaligner-mongodb.subaligner.svc.cluster.local",
                   "DB": """{{dag_run.conf['database']}}""",
                   "COLLECTION": """{{dag_run.conf['collection']}}""",
-                  "DATA_TYPE": """{{dag_run.conf['data_type']}}"""},
+                  "DATA_TYPE": """{{dag_run.conf['data_type']}}""",
+                  "WEIGHT": """{{dag_run.conf['weight']}}"""}, 
 
         do_xcom_push=True
     )
