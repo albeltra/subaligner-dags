@@ -71,7 +71,7 @@ with DAG(
         task_id="extract_subtitles",
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-subtitles",
-        image_pull_policy='Always', 
+        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
@@ -181,4 +181,4 @@ with DAG(
 
         do_xcom_push=True
     )
-    [extract_audio, extract_subtitles] >> predict_and_score >> send_results_to_db
+    predict_and_score >> send_results_to_db
