@@ -57,6 +57,7 @@ with DAG(
         affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-audio",
+        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
@@ -88,6 +89,7 @@ with DAG(
         affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-subtitles",
+        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
@@ -119,6 +121,7 @@ with DAG(
         affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-predictor:labeled-memory-search-corr",
+        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
@@ -150,6 +153,7 @@ with DAG(
         affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-send-to-db",
+        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
