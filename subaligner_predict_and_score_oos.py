@@ -25,7 +25,7 @@ volumes += [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path=
 volume_mounts += [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
 
 volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/audio-subs"))]
-volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None, read_only=False)]  
+volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None, read_only=False)]
 
 # instantiate the DAG
 with DAG(
@@ -96,8 +96,6 @@ with DAG(
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_loss'] }}",
                   "SUBALIGNER_loss_pre_shift":
                       "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_loss_pre_shift'] }}",
-                  "SUBALIGNER_subtitle_file_path":
-                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_subtitle_file_path'] }}",
                   "SUBALIGNER_time_load_dataset":
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_load_dataset'] }}",
                   "SUBALIGNER_X_shape":
