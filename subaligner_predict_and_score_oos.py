@@ -108,12 +108,10 @@ with DAG(
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_original_start'] }}",
                   "SUBALIGNER_time_sync":
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_sync'] }}",
-                  "SUBALIGNER_Extension":
-                  "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_Extension'] }}",
                   "MONGO_HOST": "subaligner-mongodb.subaligner.svc.cluster.local",
                   "DB": """{{dag_run.conf['database']}}""",
-                  "COLLECTION": """{{dag_run.conf['collection']}}""",
-                  "DATA_TYPE": """{{dag_run.conf['data_type']}}"""},
+                  "KIND": """{{dag_run.conf['kind']}}""",
+                  "COLLECTION": """{{dag_run.conf['collection']}}""",},
 
         do_xcom_push=True
     )
