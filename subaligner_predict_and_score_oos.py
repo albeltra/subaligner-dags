@@ -30,7 +30,7 @@ with DAG(
         catchup=False,
         schedule=None,
         concurrency=4,
-        max_active_runs=4, 
+        max_active_runs=4,
         dag_id="Align_and_Score_Oos",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode}
@@ -70,6 +70,7 @@ with DAG(
         task_id="send_results_to_db",
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-send-to-db:oos",
+        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
