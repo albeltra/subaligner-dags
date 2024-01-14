@@ -15,9 +15,6 @@ namespace = conf.get("kubernetes", "NAMESPACE")
 name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
-# volume_names = ["movies", "movies-4k", "tv"]
-# volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
-# volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 volumes = []
 volume_mounts = []
 
@@ -32,7 +29,7 @@ with DAG(
         start_date=datetime(2024, 1, 13),
         catchup=False,
         schedule=None,
-        concurrency=16,
+        concurrency=4,
         max_active_runs=8, 
         dag_id="Align_and_Score_Oos",
         render_template_as_native_obj=False,
