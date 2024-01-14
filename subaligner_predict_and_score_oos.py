@@ -24,8 +24,8 @@ volume_mounts = []
 volumes += [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data"))]
 volume_mounts += [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
 
-volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/audio-subs"))]
-volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None, read_only=False)]
+volumes += [k8s.V1Volume(name="subaligner-audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/subaligner-audio-subs"))]
+volume_mounts += [k8s.V1VolumeMount(name="subaligner-audio-subs", mount_path="/subaligner-audio-subs", sub_path=None, read_only=False)]
 
 # instantiate the DAG
 with DAG(
