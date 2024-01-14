@@ -29,8 +29,8 @@ with DAG(
         start_date=datetime(2024, 1, 13),
         catchup=False,
         schedule=None,
-        concurrency=4,
-        max_active_runs=4,
+        concurrency=16,
+        max_active_runs=8, 
         dag_id="Align_and_Score_Oos",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode}
