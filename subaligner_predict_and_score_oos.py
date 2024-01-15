@@ -30,7 +30,7 @@ with DAG(
         catchup=False,
         schedule=None,
         concurrency=16,
-        max_active_runs=8, 
+        max_active_runs=8,
         dag_id="Align_and_Score_Oos",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode}
@@ -106,6 +106,8 @@ with DAG(
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_original_start'] }}",
                   "SUBALIGNER_time_sync":
                   "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_time_sync'] }}",
+                  "SUBALIGNER_subtitle_file_path":
+                      "{{ task_instance.xcom_pull(task_ids='predict_and_score', key='return_value')['SUBALIGNER_subtitle_file_path'] }}",
                   "MONGO_HOST": "subaligner-mongodb.subaligner.svc.cluster.local",
                   "DB": """{{dag_run.conf['database']}}""",
                   "KIND": """{{dag_run.conf['kind']}}""",
