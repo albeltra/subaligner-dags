@@ -72,6 +72,7 @@ with DAG(
         task_id="send_results_to_db",
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-send-to-db",
+        image_pull_policy='Always', 
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
