@@ -124,7 +124,7 @@ with DAG(
         volume_mounts=volume_mounts,
         # Pod configuration
         # name the Pod
-        cmds=["bash", "-cx"],
+        cmds=["/bin/bash", "-c"],
         name="extract_audio",
         env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
                   "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
