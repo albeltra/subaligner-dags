@@ -87,4 +87,4 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    extract_audio.expand(env_vars={"list": list(range(1, 15))})
+    extract_audio.expand(arguments=list(range(1, 15)))
