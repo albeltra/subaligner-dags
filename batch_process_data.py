@@ -24,6 +24,16 @@ io_affinity = k8s.V1Affinity(
     )
 )
 
+anti_io_affinity = k8s.V1Affinity(
+    node_affinity=k8s.V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
+        k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-io"])])
+        )
+    ]
+    )
+)
+
+
 volume_names = ["movies", "tv"]
 volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
 volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
@@ -77,4 +87,4 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    [extract_audio]
+    [extract_audio,extract_audio,extract_audio,extract_audio,extract_audio]
