@@ -142,7 +142,7 @@ with DAG(
     send_results_to_db = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="send_results_to_db",
-        affinity=affinity,
+        affinity=io_affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-send-to-db",
         # launch the Pod on the same cluster as Airflow is running on
