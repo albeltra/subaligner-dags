@@ -16,6 +16,17 @@ name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
 
+
+lean_selector = k8s.V1Affinity(
+    node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
+    k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-lean"])]
+        )
+        ]
+        )
+    )
+)
+
 io_selector = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
     k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
@@ -38,7 +49,14 @@ anti_io_selector = k8s.V1Affinity(
 
 
 prefer_io_affinity = k8s.V1Affinity(
-    node_affinity=k8s.V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
+    node_affinity=k8s.V1NodeAffinity(
+        required_during_scheduling_ignored_during_execution=k8s.V1NodeSelector(
+            node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-lean"])]
+            )
+            ]
+        ),
+        preferred_during_scheduling_ignored_during_execution=[
         k8s.V1PreferredSchedulingTerm(weight=4, preference=k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])])
         ),
@@ -97,21 +115,80 @@ volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs",
 
 
 
-
-# instantiate the DAG
 with DAG(
-        start_date=datetime(2023, 5, 3),
+        start_date=datetime(2024, 9, 11),
         catchup=False,
         schedule=None,
         dag_id="Batch_Process_Data",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode},
-        concurrency=14,
+        concurrency=1,
         max_active_runs=1
 ) as dag:
-    extract_audio = KubernetesPodOperator.partial(
+    queue_jobs = KubernetesPodOperator(
         # unique id of the task within the DAG
-        task_id="extract_audio",
+        task_id="queue_jobs",
+        affinity=lean_selector,
+        # the Docker image to launch
+        image="beltranalex928/subaligner-airflow-extract-audio",
+        # launch the Pod on the same cluster as Airflow is running on
+        in_cluster=True,
+        # launch the Pod in the same namespace as Airflow is running in
+        namespace=namespace,
+        volumes=volumes,
+        volume_mounts=volume_mounts,
+        # Pod configuration
+        # name the Pod
+        name="extract_audio",
+        env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
+                  "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
+                  "stream_index": """{{dag_run.conf.get('stream_index', '')}}""",
+                  "audio_channel": """{{dag_run.conf.get('audio_channel', '')}}"""},
+        # give the Pod name a random suffix, ensure uniqueness in the namespace
+        random_name_suffix=True,
+        # reattach to worker instead of creating a new Pod on worker failure
+        reattach_on_restart=True,
+        # delete Pod after the task is finished
+        is_delete_operator_pod=True,
+        # get log stdout of the container as task logs
+        get_logs=True,
+        # log events in case of Pod failure
+        log_events_on_failure=True,
+        do_xcom_push=True
+    )
+    run_extraction = KubernetesPodOperator(
+        # unique id of the task within the DAG
+        task_id="extract_audio_subtitle",
+        affinity=prefer_io_affinity,
+        # the Docker image to launch
+        image="beltranalex928/subaligner-airflow-extract-audio-subtitle",
+        # launch the Pod on the same cluster as Airflow is running on
+        in_cluster=True,
+        # launch the Pod in the same namespace as Airflow is running in
+        namespace=namespace,
+        volumes=volumes,
+        volume_mounts=volume_mounts,
+        # Pod configuration
+        # name the Pod
+        name="extract_audio",
+        env_vars={"REDIS_HOST": "redis-master",
+                  "REDIS_PORT": "6379"},
+        # give the Pod name a random suffix, ensure uniqueness in the namespace
+        random_name_suffix=True,
+        # reattach to worker instead of creating a new Pod on worker failure
+        reattach_on_restart=True,
+        # delete Pod after the task is finished
+        is_delete_operator_pod=True,
+        # get log stdout of the container as task logs
+        get_logs=True,
+        # log events in case of Pod failure
+        log_events_on_failure=True,
+        do_xcom_push=True
+    )
+
+    generate_features = KubernetesPodOperator.partial(
+        # unique id of the task within the DAG
+        task_id="generate_features",
         affinity=network_weighted_prefer_compute_affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-audio",
@@ -140,4 +217,7 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    extract_audio.expand(arguments=[[str(x)] for x in range(1, 15)])
+    # queue_extract_jobs >> run_extraction.expand(arguments=[["rq", "worker", "disk" + str(x), "--with-scheduler", "--url", "redis://${REDIS_HOST}:${REDIS_PORT}"] for x in range(1, 15)]) >> generate_features.expand(arguments=[[str(x)] for x in range(1, 15)])
+    run_extraction.expand(
+        arguments=[["rq", "worker", "disk" + str(x), "--with-scheduler", "--url", "redis://${REDIS_HOST}:${REDIS_PORT}"]
+                   for x in range(1, 15)]) >> generate_features.expand(arguments=[[str(x)] for x in range(1, 15)])
