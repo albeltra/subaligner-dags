@@ -142,4 +142,4 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    extract_audio.expand(arguments=[["sleep", "1h"] for x in range(1, 3)])
+    extract_audio.expand(arguments=[["sleep 1h"] for x in range(1, 3)])
