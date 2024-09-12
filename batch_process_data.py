@@ -124,7 +124,6 @@ with DAG(
         volume_mounts=volume_mounts,
         # Pod configuration
         # name the Pod
-        cmds=["/bin/bash", "-c"],
         name="extract_audio",
         env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
                   "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
@@ -142,4 +141,4 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    extract_audio.expand(arguments=[["sleep 1h"] for x in range(1, 3)])
+    extract_audio.expand(arguments=[[str(x)] for x in range(1, 3)])
