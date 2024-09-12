@@ -16,11 +16,8 @@ name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
 io_affinity = k8s.V1Affinity(
-    node_affinity=k8s.V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
-        k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])])
-        )
-    ]
+    node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=[
+        k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])]
     )
 )
 
@@ -87,4 +84,4 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    extract_audio.expand(arguments=[[str(x)] for x in range(1, 15)])
+    extract_audio.expand(arguments=[[str(x)] for x in range(1, 2)])
