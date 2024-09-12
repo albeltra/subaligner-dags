@@ -59,7 +59,7 @@ with DAG(
         # unique id of the task within the DAG
         task_id="extract_audio",
         # affinity=io_affinity,
-        node_selector=io_affinity,
+        node_selector=json.dumps(io_affinity.to_dict()),
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-audio",
         # launch the Pod on the same cluster as Airflow is running on
