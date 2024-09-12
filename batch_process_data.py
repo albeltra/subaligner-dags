@@ -39,7 +39,7 @@ with DAG(
         start_date=datetime(2023, 5, 3),
         catchup=False,
         schedule=None,
-        dag_id="Align_and_Score_New_Media_Weighted",
+        dag_id="Batch_Process_Data",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode},
         concurrency=8,
