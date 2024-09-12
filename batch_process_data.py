@@ -16,7 +16,17 @@ name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
 
-io_affinity = k8s.V1Affinity(
+io_selector = k8s.V1Affinity(
+    node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
+    k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])]
+        )
+        ]
+        )
+    )
+)
+
+anti_io_selector = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
     k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-io"])]
@@ -27,15 +37,44 @@ io_affinity = k8s.V1Affinity(
 )
 
 
-anti_io_affinity = k8s.V1Affinity(
+prefer_io_affinity = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
+        k8s.V1PreferredSchedulingTerm(weight=4, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])])
+        ),
         k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
             k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-io"])])
         )
     ]
     )
 )
-print(io_affinity.to_dict())
+
+network_weighted_prefer_compute_affinity = k8s.V1Affinity(
+    node_affinity=k8s.V1NodeAffinity(
+        required_during_scheduling_ignored_during_execution=k8s.V1NodeSelector(
+            node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-io"])]
+            )
+            ]
+        ),
+        preferred_during_scheduling_ignored_during_execution=[
+        k8s.V1PreferredSchedulingTerm(weight=100, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-lean"])])
+        ),
+        k8s.V1PreferredSchedulingTerm(weight=25, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute"])])
+        ),
+        k8s.V1PreferredSchedulingTerm(weight=50, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-fentanyl"])])
+        ),
+        k8s.V1PreferredSchedulingTerm(weight=50, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-fentanyl-3090"])])
+        )
+    ]
+    )
+)
+
+
 
 volume_names = ["movies", "tv"]
 volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
@@ -55,14 +94,14 @@ with DAG(
         dag_id="Batch_Process_Data",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode},
-        concurrency=8,
+        concurrency=1,
 
-        max_active_runs=4
+        max_active_runs=1
 ) as dag:
     extract_audio = KubernetesPodOperator.partial(
         # unique id of the task within the DAG
         task_id="extract_audio",
-        affinity=io_affinity,
+        affinity=network_weighted_prefer_compute_affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-audio",
         # launch the Pod on the same cluster as Airflow is running on
