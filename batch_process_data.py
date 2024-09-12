@@ -106,8 +106,7 @@ with DAG(
         dag_id="Batch_Process_Data",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode},
-        concurrency=1,
-
+        concurrency=2,
         max_active_runs=1
 ) as dag:
     extract_audio = KubernetesPodOperator.partial(
