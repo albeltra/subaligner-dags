@@ -122,7 +122,7 @@ with DAG(
         dag_id="Batch_Process_Data",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode},
-        concurrency=14, 
+        concurrency=14,
         max_active_runs=1
 ) as dag:
     queue_jobs = KubernetesPodOperator(
@@ -131,6 +131,7 @@ with DAG(
         affinity=lean_selector,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-audio",
+        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
@@ -162,6 +163,7 @@ with DAG(
         affinity=prefer_io_affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-audio-subtitle",
+        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
@@ -190,6 +192,7 @@ with DAG(
         affinity=network_weighted_prefer_compute_affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-audio",
+        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
