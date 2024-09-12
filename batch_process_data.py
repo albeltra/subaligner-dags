@@ -85,7 +85,7 @@ volume_names = ["movies", "tv"]
 # volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
 volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x.title(), sub_path=None, read_only=True) for x in volume_names]
-volumes = [k8s.V1Volume(nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/Media/{x.title()}", server="192.168.10.6")) for x in volume_names]
+volumes = [k8s.V1Volume(name=x, nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/Media/{x.title()}", server="192.168.10.6")) for x in volume_names]
 
 volumes += [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data"))]
 volume_mounts += [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
