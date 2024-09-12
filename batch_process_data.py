@@ -81,11 +81,12 @@ network_weighted_prefer_compute_affinity = k8s.V1Affinity(
 
 
 volume_names = ["movies", "tv"]
+nfs_names = ["Movies", "TV"] 
 # volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
 # volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
 volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x.title(), sub_path=None, read_only=True) for x in volume_names]
-volumes = [k8s.V1Volume(name=x, nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/Media/{x.title()}", server="192.168.10.6")) for x in volume_names]
+volumes = [k8s.V1Volume(name=x, nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/Media/{y}", server="192.168.10.6")) for x,y in zip(volume_names, nfs_names)]
 
 volumes += [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data"))]
 volume_mounts += [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
