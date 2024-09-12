@@ -81,7 +81,7 @@ network_weighted_prefer_compute_affinity = k8s.V1Affinity(
 
 
 volume_names = ["movies", "tv"]
-nfs_names = ["Movies", "TV"] 
+nfs_names = ["Movies", "TV"]
 # volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
 # volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
@@ -124,6 +124,7 @@ with DAG(
         volume_mounts=volume_mounts,
         # Pod configuration
         # name the Pod
+        cmds=["bash", "-cx"],
         name="extract_audio",
         env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
                   "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
@@ -141,4 +142,4 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    extract_audio.expand(arguments=[[str(x)] for x in range(1, 5)])
+    extract_audio.expand(arguments=[["cat"] for x in range(1, 5)])
