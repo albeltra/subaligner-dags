@@ -15,14 +15,23 @@ namespace = conf.get("kubernetes", "NAMESPACE")
 name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
-volume_names = ["movies", "movies-4k", "tv"]
+io_affinity = k8s.V1Affinity(
+    node_affinity=k8s.V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
+        k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])])
+        )
+    ]
+    )
+)
+
+volume_names = ["movies", "tv"]
 volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
 volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
-volumes += [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data-align"))]
+volumes += [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data"))]
 volume_mounts += [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
 
-volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/audio-subs-align"))]
+volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/audio-subs"))]
 volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None, read_only=False)]
 
 # instantiate the DAG
@@ -30,18 +39,81 @@ with DAG(
         start_date=datetime(2023, 5, 3),
         catchup=False,
         schedule=None,
-        concurrency=16,
-        max_active_runs=8, 
-        dag_id="Align_and_Score_New_Media_Align",
+        dag_id="Align_and_Score_New_Media_Weighted",
         render_template_as_native_obj=False,
-        user_defined_filters={"b64encode": b64encode}
+        user_defined_filters={"b64encode": b64encode},
+        concurrency=8,
+
+        max_active_runs=4
 ) as dag:
+    extract_audio = KubernetesPodOperator(
+        # unique id of the task within the DAG
+        task_id="extract_audio",
+        affinity=io_affinity,
+        # the Docker image to launch
+        image="beltranalex928/subaligner-airflow-extract-audio",
+        # launch the Pod on the same cluster as Airflow is running on
+        in_cluster=True,
+        # launch the Pod in the same namespace as Airflow is running in
+        namespace=namespace,
+        volumes=volumes,
+        volume_mounts=volume_mounts,
+        # Pod configuration
+        # name the Pod
+        name="extract_audio",
+        env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
+                  "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
+                  "stream_index": """{{dag_run.conf.get('stream_index', '')}}""",
+                  "audio_channel": """{{dag_run.conf.get('audio_channel', '')}}"""},
+        # give the Pod name a random suffix, ensure uniqueness in the namespace
+        random_name_suffix=True,
+        # reattach to worker instead of creating a new Pod on worker failure
+        reattach_on_restart=True,
+        # delete Pod after the task is finished
+        is_delete_operator_pod=True,
+        # get log stdout of the container as task logs
+        get_logs=True,
+        # log events in case of Pod failure
+        log_events_on_failure=True,
+        do_xcom_push=True
+    )
+    extract_subtitles = KubernetesPodOperator(
+        # unique id of the task within the DAG
+        task_id="extract_subtitles",
+        affinity=io_affinity,
+        # the Docker image to launch
+        image="beltranalex928/subaligner-airflow-extract-subtitles",
+        # launch the Pod on the same cluster as Airflow is running on
+        in_cluster=True,
+        # launch the Pod in the same namespace as Airflow is running in
+        namespace=namespace,
+        volumes=volumes,
+        volume_mounts=volume_mounts,
+        # Pod configuration
+        # name the Pod
+        name="extract_subtitles",
+        env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
+                  "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
+                  "stream_index": """{{dag_run.conf.get('stream_index', '')}}""",
+                  "audio_channel": """{{dag_run.conf.get('audio_channel', '')}}"""},
+        # give the Pod name a random suffix, ensure uniqueness in the namespace
+        random_name_suffix=True,
+        # reattach to worker instead of creating a new Pod on worker failure
+        reattach_on_restart=True,
+        # delete Pod after the task is finished
+        is_delete_operator_pod=True,
+        # get log stdout of the container as task logs
+        get_logs=True,
+        # log events in case of Pod failure
+        log_events_on_failure=True,
+        do_xcom_push=True
+    )
     predict_and_score = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="predict_and_score",
+        affinity=io_affinity,
         # the Docker image to launch
-        image="beltranalex928/subaligner-airflow-predictor:align",
-        image_pull_policy='Always',
+        image="beltranalex928/subaligner-airflow-predictor:weighted",
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
@@ -70,9 +142,9 @@ with DAG(
     send_results_to_db = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="send_results_to_db",
+        affinity=affinity,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-send-to-db",
-        image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
@@ -122,4 +194,4 @@ with DAG(
 
         do_xcom_push=True
     )
-    predict_and_score >> send_results_to_db
+    [extract_audio, extract_subtitles] >> predict_and_score >> send_results_to_db
