@@ -170,9 +170,7 @@ with DAG(
         volume_mounts=volume_mounts,
         # Pod configuration
         # name the Pod
-        name="extract_audio",
-        env_vars={"REDIS_HOST": "redis-master",
-                  "REDIS_PORT": "6379"},
+        name="extract_audio_subtitle",
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
@@ -219,5 +217,5 @@ with DAG(
     )
     # queue_extract_jobs >> run_extraction.expand(arguments=[["rq", "worker", "disk" + str(x), "--with-scheduler", "--url", "redis://${REDIS_HOST}:${REDIS_PORT}"] for x in range(1, 15)]) >> generate_features.expand(arguments=[[str(x)] for x in range(1, 15)])
     run_extraction.expand(
-        arguments=[["rq", "worker", "disk" + str(x), "--with-scheduler", "--url", "redis://${REDIS_HOST}:${REDIS_PORT}"]
+        arguments=[[f"rq worker disk {str(x)} --with-scheduler --url redis://redis-master:6379"]
                    for x in range(1, 15)]) >> generate_features.expand(arguments=[[str(x)] for x in range(1, 15)])
