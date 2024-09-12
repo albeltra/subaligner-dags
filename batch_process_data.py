@@ -56,7 +56,7 @@ with DAG(
 
         max_active_runs=4
 ) as dag:
-    extract_audio = KubernetesPodOperator(
+    extract_audio = KubernetesPodOperator.partial(
         # unique id of the task within the DAG
         task_id="extract_audio",
         affinity=io_affinity,
@@ -87,4 +87,4 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    [extract_audio,extract_audio,extract_audio,extract_audio,extract_audio]
+    extract_audio.expand(env_vars={"list": list(range(1, 15))})
