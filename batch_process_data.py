@@ -15,11 +15,13 @@ namespace = conf.get("kubernetes", "NAMESPACE")
 name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
-io_affinity = k8s.V1Affinity(
-    node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=[
-        k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])]
-    )
-)
+io_affinity = k8s.V1NodeSelector(
+    node_selector_terms=[
+        k8s.V1NodeSelectorTerm(
+            [k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])
+             ]
+        )
+    ])
 
 anti_io_affinity = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
