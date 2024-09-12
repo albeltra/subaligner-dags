@@ -156,7 +156,7 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    run_extraction = KubernetesPodOperator(
+    run_extraction = KubernetesPodOperator.partial(
         # unique id of the task within the DAG
         task_id="extract_audio_subtitle",
         affinity=prefer_io_affinity,
