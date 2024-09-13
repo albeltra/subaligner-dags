@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 
-from airflow import DAG, task
+from airflow import DAG
 from airflow.configuration import conf
 from airflow.kubernetes.secret import Secret
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
