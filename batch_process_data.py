@@ -142,8 +142,8 @@ with DAG(
         namespace=namespace,
         cmds=["/bin/bash", "-c"],
         arguments=["sleep 1h"],
-        volumes=disk_volumes + media_volumes,
-        volume_mounts=disk_volume_mounts + media_volume_mounts + disk_media_volume_mounts,
+        volumes=data_volumes + disk_volumes + media_volumes,
+        volume_mounts=data_volume_mounts + disk_volume_mounts + media_volume_mounts + disk_media_volume_mounts,
         # Pod configuration
         # name the Pod
         name="queue_jobs",
