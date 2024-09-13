@@ -93,25 +93,28 @@ network_weighted_prefer_compute_affinity = k8s.V1Affinity(
 )
 
 
-
-
-
-
-
 volume_names = ["movies", "tv"]
 nfs_names = ["Movies", "TV"]
-# volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
-# volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
-volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
-volumes = [k8s.V1Volume(name=x, nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/Media/{y}", server="192.168.10.6")) for x, y in zip(volume_names, nfs_names)]
+disk_volumes = [k8s.V1Volume(name="mnt", host_path=k8s.V1HostPathVolumeSource(path="/mnt"))]
+disk_volume_mounts = [k8s.V1VolumeMount(name="mnt", mount_path="/mnt", sub_path=None, read_only=True)]
 
-volumes += [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data"))]
-volume_mounts += [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
+media_volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
+
+media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
+disk_media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/mnt/user/Media" + y, sub_path=None, read_only=True) for x,y in zip(volume_names, nfs_names)]
 
 
-volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/audio-subs"))]
-volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None, read_only=False)]
+nfs_media_volumes = [k8s.V1Volume(name=x, nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/Media/{y}", server="192.168.10.6")) for x, y in zip(volume_names, nfs_names)]
+nfs_media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
+
+nfs_data_volumes = [k8s.V1Volume(name="data", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-data", server="192.168.10.6"))]
+data_volumes = [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data"))]
+data_volume_mounts = [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
+
+nfs_data_volumes += [k8s.V1Volume(name="audio-subs", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-audio-subs", server="192.168.10.6"))]
+data_volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/audio-subs"))]
+data_volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None, read_only=False)]
 
 
 
@@ -136,15 +139,13 @@ with DAG(
         in_cluster=True,
         # launch the Pod in the same namespace as Airflow is running in
         namespace=namespace,
-        volumes=volumes,
-        volume_mounts=volume_mounts,
+        cmds=["/bin/bash", "-c"],
+        arguments=["sleep 1h"],
+        volumes=disk_volumes + media_volumes,
+        volume_mounts=disk_volume_mounts + media_volume_mounts + disk_media_volume_mounts,
         # Pod configuration
         # name the Pod
-        name="extract_audio",
-        env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
-                  "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
-                  "stream_index": """{{dag_run.conf.get('stream_index', '')}}""",
-                  "audio_channel": """{{dag_run.conf.get('audio_channel', '')}}"""},
+        name="queue_jobs",
         # give the Pod name a random suffix, ensure uniqueness in the namespace
         random_name_suffix=True,
         # reattach to worker instead of creating a new Pod on worker failure
@@ -157,68 +158,69 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    run_extraction = KubernetesPodOperator.partial(
-        # unique id of the task within the DAG
-        task_id="extract_audio_subtitle",
-        affinity=prefer_io_affinity,
-        # the Docker image to launch
-        image="beltranalex928/subaligner-airflow-extract-audio-subtitle",
-        image_pull_policy='Always',
-        # launch the Pod on the same cluster as Airflow is running on
-        in_cluster=True,
-        # launch the Pod in the same namespace as Airflow is running in
-        namespace=namespace,
-        volumes=volumes,
-        volume_mounts=volume_mounts,
-        # Pod configuration
-        # name the Pod
-        name="extract_audio_subtitle",
-        # give the Pod name a random suffix, ensure uniqueness in the namespace
-        random_name_suffix=True,
-        # reattach to worker instead of creating a new Pod on worker failure
-        reattach_on_restart=True,
-        # delete Pod after the task is finished
-        is_delete_operator_pod=True,
-        # get log stdout of the container as task logs
-        get_logs=True,
-        # log events in case of Pod failure
-        log_events_on_failure=True,
-        do_xcom_push=True
-    )
-
-    generate_features = KubernetesPodOperator.partial(
-        # unique id of the task within the DAG
-        task_id="generate_features",
-        affinity=network_weighted_prefer_compute_affinity,
-        # the Docker image to launch
-        image="beltranalex928/subaligner-airflow-extract-audio",
-        image_pull_policy='Always',
-        # launch the Pod on the same cluster as Airflow is running on
-        in_cluster=True,
-        # launch the Pod in the same namespace as Airflow is running in
-        namespace=namespace,
-        volumes=volumes,
-        volume_mounts=volume_mounts,
-        # Pod configuration
-        # name the Pod
-        name="extract_audio",
-        env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
-                  "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
-                  "stream_index": """{{dag_run.conf.get('stream_index', '')}}""",
-                  "audio_channel": """{{dag_run.conf.get('audio_channel', '')}}"""},
-        # give the Pod name a random suffix, ensure uniqueness in the namespace
-        random_name_suffix=True,
-        # reattach to worker instead of creating a new Pod on worker failure
-        reattach_on_restart=True,
-        # delete Pod after the task is finished
-        is_delete_operator_pod=True,
-        # get log stdout of the container as task logs
-        get_logs=True,
-        # log events in case of Pod failure
-        log_events_on_failure=True,
-        do_xcom_push=True
-    )
+    # run_extraction = KubernetesPodOperator.partial(
+    #     # unique id of the task within the DAG
+    #     task_id="extract_audio_subtitle",
+    #     affinity=prefer_io_affinity,
+    #     # the Docker image to launch
+    #     image="beltranalex928/subaligner-airflow-extract-audio-subtitle",
+    #     image_pull_policy='Always',
+    #     # launch the Pod on the same cluster as Airflow is running on
+    #     in_cluster=True,
+    #     # launch the Pod in the same namespace as Airflow is running in
+    #     namespace=namespace,
+    #     volumes=data_volumes + media_volumes,
+    #     volume_mounts=data_volume_mounts + media_volume_mounts,
+    #     # Pod configuration
+    #     # name the Pod
+    #     name="extract_audio_subtitle",
+    #     # give the Pod name a random suffix, ensure uniqueness in the namespace
+    #     random_name_suffix=True,
+    #     # reattach to worker instead of creating a new Pod on worker failure
+    #     reattach_on_restart=True,
+    #     # delete Pod after the task is finished
+    #     is_delete_operator_pod=True,
+    #     # get log stdout of the container as task logs
+    #     get_logs=True,
+    #     # log events in case of Pod failure
+    #     log_events_on_failure=True,
+    #     do_xcom_push=True
+    # )
+    #
+    # generate_features = KubernetesPodOperator.partial(
+    #     # unique id of the task within the DAG
+    #     task_id="generate_features",
+    #     affinity=network_weighted_prefer_compute_affinity,
+    #     # the Docker image to launch
+    #     image="beltranalex928/subaligner-airflow-extract-audio",
+    #     image_pull_policy='Always',
+    #     # launch the Pod on the same cluster as Airflow is running on
+    #     in_cluster=True,
+    #     # launch the Pod in the same namespace as Airflow is running in
+    #     namespace=namespace,
+    #     volumes=volumes,
+    #     volume_mounts=volume_mounts,
+    #     # Pod configuration
+    #     # name the Pod
+    #     name="extract_audio",
+    #     env_vars={"mediaFile": """{{dag_run.conf['mediaFile']}}""",
+    #               "mediaInfo": """{{dag_run.conf['mediaInfo']}}""",
+    #               "stream_index": """{{dag_run.conf.get('stream_index', '')}}""",
+    #               "audio_channel": """{{dag_run.conf.get('audio_channel', '')}}"""},
+    #     # give the Pod name a random suffix, ensure uniqueness in the namespace
+    #     random_name_suffix=True,
+    #     # reattach to worker instead of creating a new Pod on worker failure
+    #     reattach_on_restart=True,
+    #     # delete Pod after the task is finished
+    #     is_delete_operator_pod=True,
+    #     # get log stdout of the container as task logs
+    #     get_logs=True,
+    #     # log events in case of Pod failure
+    #     log_events_on_failure=True,
+    #     do_xcom_push=True
+    # )
+    queue_extract_jobs
     # queue_extract_jobs >> run_extraction.expand(arguments=[["rq", "worker", "disk" + str(x), "--with-scheduler", "--url", "redis://${REDIS_HOST}:${REDIS_PORT}"] for x in range(1, 15)]) >> generate_features.expand(arguments=[[str(x)] for x in range(1, 15)])
-    run_extraction.expand(
-        arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
-                   for x in range(1, 15)]) >> generate_features.expand(arguments=[[str(x)] for x in range(1, 15)])
+    # run_extraction.expand(
+    #     arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
+    #                for x in range(1, 15)]) >> generate_features.expand(arguments=[[str(x)] for x in range(1, 15)])
