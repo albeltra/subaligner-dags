@@ -137,6 +137,7 @@ with DAG(
         in_cluster=True,
         namespace=namespace,
         cmds=["/bin/bash", "-c"],
+        arguments=["python scan_paths.py"],
         volumes=data_volumes + disk_volumes + media_volumes,
         volume_mounts=data_volume_mounts + disk_volume_mounts + media_volume_mounts + disk_media_volume_mounts,
         name="queue_jobs",
@@ -725,7 +726,7 @@ with DAG(
 
     @task_group
     def create_and_add_to_db(arg):
-        scan_paths.expand(arguments=[[f"python scan_paths.py --disk {arg}"]]) >> create(arg) >> add_to_db(arg)
+        create(arg["create_features_kwargs"]) >> add_to_db(arg["add_to_db_kwargs"])
 
 
-    create_and_add_to_db.expand(arg=list(range(1, 15)))
+    scan_paths >> create_and_add_to_db.expand("{{ task_instance.xcom_pull(task_ids='scan_paths', key='return_value')['output'] }}")
