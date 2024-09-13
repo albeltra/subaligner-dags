@@ -221,6 +221,6 @@ with DAG(
     #     do_xcom_push=True
     # )
 
-    run_extraction.expand(
+    queue_jobs >> run_extraction.expand(
          arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
                     for x in range(1, 15)])
