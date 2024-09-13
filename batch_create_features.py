@@ -724,9 +724,9 @@ with DAG(
                }
         col.update_one(doc, {"$set": doc}, upsert=True)
 
-    @task_group
-    def create_and_add_to_db():
-        scan_paths >> create("{{ task_instance.xcom_pull(task_ids='scan_paths', key='return_value')['output'] }}") # >> add_to_db(arg["add_to_db_kwargs"])
+    # @task_group
+    # def create_and_add_to_db():
+    #      # >> add_to_db(arg["add_to_db_kwargs"])
 
 
-    create_and_add_to_db
+    scan_paths >> create("{{ task_instance.xcom_pull(task_ids='scan_paths', key='return_value')['output'] }}")
