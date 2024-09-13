@@ -39,6 +39,20 @@ anti_io_selector = k8s.V1Affinity(
     )
 )
 
+
+anti_io_lean = k8s.V1Affinity(
+    node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
+    k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
+        k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-io"]),
+        k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-lean"])]
+    )
+    ]
+    )
+    )
+)
+
+
+
 prefer_io_affinity = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(
         required_during_scheduling_ignored_during_execution=k8s.V1NodeSelector(
@@ -150,13 +164,13 @@ with DAG(
     )
 
     kwargs = {
-        "affinity": network_weighted_prefer_compute_affinity,
+        "affinity": anti_io_lean, 
         "image": "beltranalex928/subaligner-airflow-queue-jobs",
         "image_pull_policy": 'Always',
         "in_cluster": True,
         "namespace": namespace,
-        "volumes": nfs_data_volumes + nfs_media_volumes,
-        "volume_mounts": data_volume_mounts + media_volume_mounts,
+        "volumes": nfs_data_volumes,
+        "volume_mounts": data_volume_mounts,
         "name": "extract_audio_subtitle",
         "random_name_suffix": True,
         "reattach_on_restart": True,
