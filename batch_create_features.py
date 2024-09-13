@@ -725,7 +725,7 @@ with DAG(
 
     @task_group
     def create_and_add_to_db(arg):
-        scan_paths.expand(arguments=f"python scan_paths.py --disk {arg}") >> create(arg) >> add_to_db(arg)
+        scan_paths.expand(arguments=[[f"python scan_paths.py --disk {arg}"]]) >> create(arg) >> add_to_db(arg)
 
 
     create_and_add_to_db.expand(arg=list(range(1, 15)))
