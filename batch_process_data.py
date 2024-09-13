@@ -154,6 +154,7 @@ with DAG(
 
             if any_queued:
                 retry_queues.append(k)
+        print(retry_queues)
         return [[f"rq worker --burst {str(x)} --with-scheduler --url redis://redis-master:6379"] for x in retry_queues]
 
 
