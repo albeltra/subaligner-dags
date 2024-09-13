@@ -15,6 +15,7 @@ namespace = conf.get("kubernetes", "NAMESPACE")
 name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
+NUM_DISKS = 14
 
 
 lean_selector = k8s.V1Affinity(
@@ -96,8 +97,8 @@ network_weighted_prefer_compute_affinity = k8s.V1Affinity(
 volume_names = ["movies", "tv"]
 nfs_names = ["Movies", "TV"]
 
-disk_volumes = [k8s.V1Volume(name="mnt", host_path=k8s.V1HostPathVolumeSource(path="/mnt"))]
-disk_volume_mounts = [k8s.V1VolumeMount(name="mnt", mount_path="/mnt", sub_path=None, read_only=True)]
+disk_volumes =[k8s.V1Volume(name=f"disk{i}", host_path=k8s.V1HostPathVolumeSource(path=f"/host/mnt/disk{i}")) for i in range(1, NUM_DISKS + 1)]
+disk_volume_mounts = [k8s.V1VolumeMount(name=f"disk{i}", mount_path=f"/mnt/disk{i}", sub_path=None, read_only=True) for i in range(1, NUM_DISKS + 1)]
 
 media_volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
