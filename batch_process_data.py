@@ -9,7 +9,6 @@ from kubernetes.client import models as k8s
 from base64 import b64encode
 
 from airflow.decorators import task
-from helper import add_to_db, CustomFeatureEmbedder
 # get the current Kubernetes namespace Airflow is running in
 namespace = conf.get("kubernetes", "NAMESPACE")
 
@@ -128,9 +127,6 @@ with DAG(
         concurrency=14,
         max_active_runs=1
 ) as dag:
-    @task(task_id="add_features_to_db")
-    def func(*kwargs):
-        add_to_db(**kwargs)
     @task(task_id="requeue_failed_jobs")
     def queue_failed_jobs(num_disks, redis_host="redis-master", redis_port="6379", max_attempts=3):
         from redis import Redis
