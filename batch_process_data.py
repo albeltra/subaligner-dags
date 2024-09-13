@@ -223,4 +223,4 @@ with DAG(
 
     run_extraction.expand(
          arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
-                    for x in range(1, 15)]) >> generate_features.expand(arguments=[[str(x)] for x in range(1, 15)])
+                    for x in range(1, 15)])
