@@ -18,15 +18,15 @@ secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 NUM_DISKS = 14
 
 
-lean_selector = k8s.V1Affinity(
-    node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
-    k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-lean"])]
-        )
-        ]
-        )
-    )
-)
+# lean_selector = k8s.V1Affinity(
+#     node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
+#     k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
+#             k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-lean"])]
+#         )
+#         ]
+#         )
+#     )
+# )
 
 io_selector = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
@@ -132,7 +132,7 @@ with DAG(
     queue_jobs = KubernetesPodOperator(
         # unique id of the task within the DAG
         task_id="queue_jobs",
-        affinity=lean_selector,
+        affinity=io_selector,
         # the Docker image to launch
         image="beltranalex928/subaligner-airflow-extract-audio",
         image_pull_policy='Always',
