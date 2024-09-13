@@ -1,14 +1,14 @@
 from datetime import datetime
 import json
 
-from airflow import DAG, task
+from airflow import DAG
 from airflow.configuration import conf
 from airflow.kubernetes.secret import Secret
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
 from kubernetes.client import models as k8s
 from base64 import b64encode
 
-from airflow.decorators import task
+from airflow.decorators import task, task_group
 
 # get the current Kubernetes namespace Airflow is running in
 namespace = conf.get("kubernetes", "NAMESPACE")
@@ -130,14 +130,13 @@ with DAG(
 ) as dag:
 
     scan_paths = KubernetesPodOperator(
-        task_id="queue_jobs",
+        task_id="scan_paths",
         affinity=io_selector,
         image="beltranalex928/subaligner-airflow-queue-jobs",
         image_pull_policy='Always',
         in_cluster=True,
         namespace=namespace,
         cmds=["/bin/bash", "-c"],
-        arguments=["python queue_jobs.py"],
         volumes=data_volumes + disk_volumes + media_volumes,
         volume_mounts=data_volume_mounts + disk_volume_mounts + media_volume_mounts + disk_media_volume_mounts,
         name="queue_jobs",
@@ -148,8 +147,10 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
+
+
     @task(task_id="create_features")
-    def create(**kwargs):
+    def create(kwargs):
         import gc
         import os
         from datetime import datetime, timedelta
@@ -671,15 +672,16 @@ with DAG(
 
 
     @task(task_id="add_features_to_db")
-    def add_to_db(connection_string,
-                  db,
-                  audio_path,
-                  out_path,
-                  media_path,
-                  subtitle_path,
-                  kind,
-                  codec,
-                  version):
+    def add_to_db(args):
+        connection_string = args["connection_string"]
+        db = args["db"]
+        audio_path = args["audio_path"]
+        out_path = args["out_path"]
+        media_path = args["media_path"]
+        subtitle_path = args["subtitle_path"]
+        kind = args["kind"]
+        codec = args["codec"]
+        version = args["version"]
         import h5py
         import numpy as np
         import pymongo
@@ -721,5 +723,9 @@ with DAG(
                }
         col.update_one(doc, {"$set": doc}, upsert=True)
 
-    #
+    @task_group
+    def create_and_add_to_db(args):
+        create(args["create_features_kwargs"]) >> add_to_db(args["add_to_db_kwargs"])
 
+
+    create_and_add_to_db.expand(scan_paths.expand(arguments=[[f"python scan_paths.py --disk {x}"] for x in range(1, 15)]))
