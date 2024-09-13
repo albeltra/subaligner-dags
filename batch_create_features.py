@@ -725,8 +725,9 @@ with DAG(
         col.update_one(doc, {"$set": doc}, upsert=True)
 
     @task_group
-    def create_and_add_to_db(arg):
-        create(arg["create_features_kwargs"]) >> add_to_db(arg["add_to_db_kwargs"])
+    def create_and_add_to_db():
+        arg = "{{ task_instance.xcom_pull(task_ids='scan_paths', key='return_value')['output'] }}"
+        create(arg[0]["create_features_kwargs"]) # >> add_to_db(arg["add_to_db_kwargs"])
 
 
-    scan_paths >> create_and_add_to_db.expand(arg="{{ task_instance.xcom_pull(task_ids='scan_paths', key='return_value')['output'] }}")
+    scan_paths >> create_and_add_to_db
