@@ -204,34 +204,25 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
-    run_extraction = KubernetesPodOperator.partial(
-        # unique id of the task within the DAG
-        task_id="extract_audio_subtitle",
-        affinity=prefer_io_affinity,
-        # the Docker image to launch
-        image="beltranalex928/subaligner-airflow-extract-audio-subtitle",
-        image_pull_policy='Always',
-        # launch the Pod on the same cluster as Airflow is running on
-        in_cluster=True,
-        # launch the Pod in the same namespace as Airflow is running in
-        namespace=namespace,
-        volumes=data_volumes + media_volumes,
-        volume_mounts=data_volume_mounts + media_volume_mounts,
-        # Pod configuration
-        # name the Pod
-        name="extract_audio_subtitle",
-        # give the Pod name a random suffix, ensure uniqueness in the namespace
-        random_name_suffix=True,
-        # reattach to worker instead of creating a new Pod on worker failure
-        reattach_on_restart=True,
-        # delete Pod after the task is finished
-        is_delete_operator_pod=True,
-        # get log stdout of the container as task logs
-        get_logs=True,
-        # log events in case of Pod failure
-        log_events_on_failure=True,
-        do_xcom_push=True
-    )
+
+    kwargs = {
+        "affinity": prefer_io_affinity,
+        "image": "beltranalex928/subaligner-airflow-extract-audio-subtitle",
+        "image_pull_policy": 'Always',
+        "in_cluster": True,
+        "namespace": namespace,
+        "volumes": data_volumes + media_volumes,
+        "volume_mounts": data_volume_mounts + media_volume_mounts,
+        "name": "extract_audio_subtitle",
+        "random_name_suffix": True,
+        "reattach_on_restart": True,
+        "is_delete_operator_pod": True,
+        "get_logs": True,
+        "log_events_on_failure": True,
+        "do_xcom_push": True
+    }
+    run_extraction = KubernetesPodOperator.partial(**(kwargs | {"task_id": "extract_audio_subtitle"}))
+    run_failed_extraction = KubernetesPodOperator.partial(**(kwargs | {"task_id": "extract_failed_audio_subtitle"}))
     #
     # generate_features = KubernetesPodOperator.partial(
     #     # unique id of the task within the DAG
@@ -266,7 +257,7 @@ with DAG(
     #     do_xcom_push=True
     # )
 
-    run_extraction.expand(
+    run_failed_extraction.expand(
         arguments=queue_failed_jobs(num_disks=NUM_DISKS, redis_host="redis-master", redis_port="6379"
                                     )
     ) >> queue_jobs >> run_extraction.expand(
