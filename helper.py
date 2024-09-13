@@ -1,70 +1,19 @@
-import gc
-import os
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Tuple, Optional
-
-import h5py
-import librosa
-import numpy as np
-import pymongo
-from pysrt import SubRipTime, SubRipFile
-from scipy.stats import laplace
-from subaligner.embedder import FeatureEmbedder
-from subaligner.subtitle import Subtitle
-
-
-def add_to_db(connection_string,
-              db,
-              audio_path,
-              out_path,
-              media_path,
-              subtitle_path,
-              kind,
-              codec,
-              version):
-
-    try:
-        with h5py.File(out_path, 'r') as f:
-            length = f['data'].shape[0]
-            label_average = np.array(f['label_average'])
-            og_label_average = np.array(f['og_label_average'])
-    except FileNotFoundError:
-        return
-    client = pymongo.MongoClient(connection_string)
-    col = client[db]["v" + str(version)]
-    doc = {'audio_file_path': str(audio_path),
-           'features_file_path': str(out_path),
-           'media_file_path': media_path,
-           'length': length,
-           'subtitle_file_path': subtitle_path,
-           'extension': audio_path.split('.')[-2],
-           'subtitle': subtitle_path.split('.')[-3],
-           'kind': kind,
-           'codec': codec
-           }
-    col.update_one(doc, {
-        "$set": doc | {"og_label_average": float(og_label_average), "label_average": float(label_average)}},
-                   upsert=True)
-
-    col = client[db]["data"]
-    doc = {'audio_file_path': str(audio_path),
-           'features_file_path': str(out_path),
-           'media_file_path': media_path,
-           'length': length,
-           'subtitle_file_path': subtitle_path,
-           'subtitle': subtitle_path.split('.')[-3],
-           'extension': audio_path.split('.')[-2],
-           'kind': kind,
-           'codec': codec,
-           'version': version
-           }
-    col.update_one(doc, {"$set": doc}, upsert=True)
-
 class CustomFeatureEmbedder(object):
     """Audio and subtitle feature embedding.
     """
+    import gc
+    import os
+    from datetime import datetime, timedelta
+    from pathlib import Path
+    from typing import Tuple, Optional
 
+    import h5py
+    import librosa
+    import numpy as np
+    from pysrt import SubRipTime, SubRipFile
+    from scipy.stats import laplace
+    from subaligner.embedder import FeatureEmbedder
+    from subaligner.subtitle import Subtitle
     def __init__(
             self,
             n_mfcc: int = 13,
