@@ -726,7 +726,7 @@ with DAG(
 
     @task_group
     def create_and_add_to_db(arg):
-        create(arg["create_feature_kwargs"]) >> add_to_db(arg["add_to_db_kwargs"])
+        create.expand(kwargs=[x["create_feature_kwargs"] for x in arg]) # >> add_to_db(arg["add_to_db_kwargs"])
 
 
-    scan_paths >> create_and_add_to_db.expand(arg="{{ task_instance.xcom_pull(task_ids='scan_paths', key='return_value')['output']}}")
+    scan_paths >> create_and_add_to_db("{{ task_instance.xcom_pull(task_ids='scan_paths', key='return_value')['output']}}")
