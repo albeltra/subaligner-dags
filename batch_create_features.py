@@ -129,7 +129,7 @@ with DAG(
         max_active_runs=1
 ) as dag:
 
-    scan_paths = KubernetesPodOperator.partial(
+    scan_paths = KubernetesPodOperator(
         task_id="scan_paths",
         affinity=io_selector,
         image="beltranalex928/subaligner-airflow-queue-jobs",
