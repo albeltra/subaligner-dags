@@ -19,16 +19,6 @@ secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
 NUM_DISKS = 14
 
-# lean_selector = k8s.V1Affinity(
-#     node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
-#     k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
-#             k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-lean"])]
-#         )
-#         ]
-#         )
-#     )
-# )
-
 io_selector = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
     k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
@@ -128,8 +118,6 @@ nfs_data_volumes += [k8s.V1Volume(name="audio-subs", nfs=k8s.V1NFSVolumeSource(p
 data_volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/audio-subs"))]
 data_volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None, read_only=False)]
 
-
-
 with DAG(
         start_date=datetime(2024, 9, 11),
         catchup=False,
@@ -146,21 +134,18 @@ with DAG(
         from rq import Queue
         from rq.job import Job
 
-        redis = Redis(host=redis_host, port=redis_port)
+        redis_connection = Redis(host=redis_host, port=redis_port)
         queues = {("disk" + str(i)): Queue(name="disk" + str(i),
-                                           connection=Redis(
-                                               host=redis_host,
-                                               port=redis_port),
-                                           default_timeout=100000) for i in range(1, NUM_DISKS + 1)}
+                                           connection=redis_connection,
+                                           default_timeout=100000) for i in range(1, num_disks + 1)}
         retry_queues = []
         for k, q in queues.items():
             registry = q.failed_job_registry
 
-            # This is how to get jobs from FailedJobRegistry
             any_queued = False
             failed_jobs = registry.get_job_ids()
             for job_id in failed_jobs:
-                job = Job.fetch(job_id, connection=redis)
+                job = Job.fetch(job_id, connection=redis_connection)
                 num_attempts = job.meta.get("num_attempts", 1)
                 if num_attempts < max_attempts:
                     job.meta["num_attempts"] = num_attempts + 1
@@ -172,6 +157,7 @@ with DAG(
                 retry_queues.append(k)
             assert len(registry) == 0
         return [f"rq worker --burst {str(x)} --with-scheduler --url redis://redis-master:6379" for x in retry_queues]
+
 
     queue_jobs = KubernetesPodOperator(
         # unique id of the task within the DAG
