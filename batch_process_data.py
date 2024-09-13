@@ -17,7 +17,6 @@ secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
 NUM_DISKS = 14
 
-
 # lean_selector = k8s.V1Affinity(
 #     node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
 #     k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
@@ -31,40 +30,42 @@ NUM_DISKS = 14
 io_selector = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
     k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])]
-        )
-        ]
-        )
+        k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])]
+    )
+    ]
+    )
     )
 )
 
 anti_io_selector = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(required_during_scheduling_ignored_during_execution=
     k8s.V1NodeSelector(node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-io"])]
-        )
-        ]
-        )
+        k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-io"])]
+    )
+    ]
+    )
     )
 )
-
 
 prefer_io_affinity = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(
         required_during_scheduling_ignored_during_execution=k8s.V1NodeSelector(
             node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
-                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-lean"])]
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn",
+                                              values=["compute-worker-lean"])]
             )
             ]
         ),
         preferred_during_scheduling_ignored_during_execution=[
-        k8s.V1PreferredSchedulingTerm(weight=4, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-io"])])
-        ),
-        k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-io"])])
-        )
-    ]
+            k8s.V1PreferredSchedulingTerm(weight=4, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In",
+                                              values=["compute-worker-io"])])
+                                          ),
+            k8s.V1PreferredSchedulingTerm(weight=1, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn",
+                                              values=["compute-worker-io"])])
+                                          )
+        ]
     )
 )
 
@@ -72,52 +73,60 @@ network_weighted_prefer_compute_affinity = k8s.V1Affinity(
     node_affinity=k8s.V1NodeAffinity(
         required_during_scheduling_ignored_during_execution=k8s.V1NodeSelector(
             node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
-                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn", values=["compute-worker-io"])]
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn",
+                                              values=["compute-worker-io"])]
             )
             ]
         ),
         preferred_during_scheduling_ignored_during_execution=[
-        k8s.V1PreferredSchedulingTerm(weight=100, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-lean"])])
-        ),
-        k8s.V1PreferredSchedulingTerm(weight=25, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute"])])
-        ),
-        k8s.V1PreferredSchedulingTerm(weight=50, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-fentanyl"])])
-        ),
-        k8s.V1PreferredSchedulingTerm(weight=50, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-            k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-worker-fentanyl-3090"])])
-        )
-    ]
+            k8s.V1PreferredSchedulingTerm(weight=100, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In",
+                                              values=["compute-worker-lean"])])
+                                          ),
+            k8s.V1PreferredSchedulingTerm(weight=25, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute"])])
+                                          ),
+            k8s.V1PreferredSchedulingTerm(weight=50, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In",
+                                              values=["compute-worker-fentanyl"])])
+                                          ),
+            k8s.V1PreferredSchedulingTerm(weight=50, preference=k8s.V1NodeSelectorTerm(match_expressions=[
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In",
+                                              values=["compute-worker-fentanyl-3090"])])
+                                          )
+        ]
     )
 )
-
 
 volume_names = ["movies", "tv"]
 nfs_names = ["Movies", "TV"]
 
-disk_volumes =[k8s.V1Volume(name=f"mnt", host_path=k8s.V1HostPathVolumeSource(path=f"/host"))]
+disk_volumes = [k8s.V1Volume(name=f"mnt", host_path=k8s.V1HostPathVolumeSource(path=f"/host"))]
 disk_volume_mounts = [k8s.V1VolumeMount(name=f"mnt", mount_path=f"/mnt", sub_path=None, read_only=True)]
 
 media_volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
-media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
-disk_media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/mnt/user/Media/" + y, sub_path=None, read_only=True) for x,y in zip(volume_names, nfs_names)]
+media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in
+                       volume_names]
+disk_media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/mnt/user/Media/" + y, sub_path=None, read_only=True)
+                            for x, y in zip(volume_names, nfs_names)]
 
+nfs_media_volumes = [k8s.V1Volume(name=x, nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/Media/{y}", server="192.168.10.6"))
+                     for x, y in zip(volume_names, nfs_names)]
+nfs_media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in
+                           volume_names]
 
-nfs_media_volumes = [k8s.V1Volume(name=x, nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/Media/{y}", server="192.168.10.6")) for x, y in zip(volume_names, nfs_names)]
-nfs_media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
-
-nfs_data_volumes = [k8s.V1Volume(name="data", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-data", server="192.168.10.6"))]
+nfs_data_volumes = [
+    k8s.V1Volume(name="data", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-data", server="192.168.10.6"))]
 data_volumes = [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data"))]
 data_volume_mounts = [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
 
-nfs_data_volumes += [k8s.V1Volume(name="audio-subs", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-audio-subs", server="192.168.10.6"))]
+nfs_data_volumes += [k8s.V1Volume(name="audio-subs", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-audio-subs",
+                                                                               server="192.168.10.6"))]
 data_volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/audio-subs"))]
 data_volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None, read_only=False)]
 
-@task
+
 def queue_failed_jobs(NUM_DISKS, redis_host="redis-master", redis_port="6379", max_attempts=3):
     from redis import Redis
     from rq import Queue
@@ -149,6 +158,7 @@ def queue_failed_jobs(NUM_DISKS, redis_host="redis-master", redis_port="6379", m
             retry_queues.append(k)
         # assert len(registry) == 0
     return retry_queues
+
 
 with DAG(
         start_date=datetime(2024, 9, 11),
@@ -253,8 +263,8 @@ with DAG(
     # )
 
     run_extraction.expand(
-        arguments=queue_failed_jobs(NUM_DISKS, redis_host="redis-master", redis_port=6379
+        arguments=queue_failed_jobs(NUM_DISKS, redis_host="redis-master", redis_port="6379"
                                     )
     ) >> queue_jobs >> run_extraction.expand(
-         arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
-                    for x in range(1, 15)])
+        arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
+                   for x in range(1, 15)])
