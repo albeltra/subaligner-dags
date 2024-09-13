@@ -252,7 +252,9 @@ with DAG(
     #     do_xcom_push=True
     # )
 
-    run_extraction.expand(arguments=queue_failed_jobs(NUM_DISKS=NUM_DISKS)) >> queue_jobs >> run_extraction.expand(arguments=[["rq", "worker", "disk" + str(x), "--with-scheduler", "--url", "redis://${REDIS_HOST}:${REDIS_PORT}"] for x in range(1, 15)])
-    # run_extraction.expand(
-    #     arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
-    #                for x in range(1, 15)]) >> generate_features.expand(arguments=[[str(x)] for x in range(1, 15)])
+    run_extraction.expand(
+        arguments=queue_failed_jobs(NUM_DISKS, redis_host="redis-master", redis_port=6379
+                                    )
+    ) >> queue_jobs >> run_extraction.expand(
+         arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
+                    for x in range(1, 15)])
