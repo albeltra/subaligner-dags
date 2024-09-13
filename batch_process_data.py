@@ -102,7 +102,7 @@ disk_volume_mounts = [k8s.V1VolumeMount(name="mnt", mount_path="/mnt", sub_path=
 media_volumes = [k8s.V1Volume(name=x, host_path=k8s.V1HostPathVolumeSource(path="/" + x)) for x in volume_names]
 
 media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/" + x, sub_path=None, read_only=True) for x in volume_names]
-disk_media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/mnt/user/Media" + y, sub_path=None, read_only=True) for x,y in zip(volume_names, nfs_names)]
+disk_media_volume_mounts = [k8s.V1VolumeMount(name=x, mount_path="/mnt/user/Media/" + y, sub_path=None, read_only=True) for x,y in zip(volume_names, nfs_names)]
 
 
 nfs_media_volumes = [k8s.V1Volume(name=x, nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/Media/{y}", server="192.168.10.6")) for x, y in zip(volume_names, nfs_names)]
