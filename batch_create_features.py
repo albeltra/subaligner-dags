@@ -122,7 +122,7 @@ with DAG(
         start_date=datetime(2024, 9, 11),
         catchup=False,
         schedule=None,
-        dag_id="Batch_Process_Data",
+        dag_id="Batch_Create_Features",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode},
         concurrency=14,
