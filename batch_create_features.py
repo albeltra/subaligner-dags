@@ -150,12 +150,12 @@ with DAG(
     )
 
     kwargs = {
-        "affinity": prefer_io_affinity,
+        "affinity": network_weighted_prefer_compute_affinity,
         "image": "beltranalex928/subaligner-airflow-queue-jobs",
         "image_pull_policy": 'Always',
         "in_cluster": True,
         "namespace": namespace,
-        "volumes": data_volumes + media_volumes,
+        "volumes": nfs_data_volumes + nfs_media_volumes,
         "volume_mounts": data_volume_mounts + media_volume_mounts,
         "name": "extract_audio_subtitle",
         "random_name_suffix": True,
