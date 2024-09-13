@@ -1,19 +1,6 @@
 class CustomFeatureEmbedder(object):
     """Audio and subtitle feature embedding.
     """
-    import gc
-    import os
-    from datetime import datetime, timedelta
-    from pathlib import Path
-    from typing import Tuple, Optional
-
-    import h5py
-    import librosa
-    import numpy as np
-    from pysrt import SubRipTime, SubRipFile
-    from scipy.stats import laplace
-    from subaligner.embedder import FeatureEmbedder
-    from subaligner.subtitle import Subtitle
     def __init__(
             self,
             n_mfcc: int = 13,

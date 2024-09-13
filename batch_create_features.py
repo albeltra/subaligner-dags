@@ -148,6 +148,23 @@ with DAG(
         log_events_on_failure=True,
         do_xcom_push=True
     )
+    @task(task_id="create_features")
+    def create(**kwargs):
+        import gc
+        import os
+        from datetime import datetime, timedelta
+        from pathlib import Path
+        from typing import Tuple, Optional
+
+        import h5py
+        import librosa
+        import numpy as np
+        from pysrt import SubRipTime, SubRipFile
+        from scipy.stats import laplace
+        from subaligner.embedder import FeatureEmbedder
+        from subaligner.subtitle import Subtitle
+        CustomFeatureEmbedder().extract_data_and_label_from_audio(**kwargs)
+
 
     @task(task_id="add_features_to_db")
     def add_to_db(connection_string,
