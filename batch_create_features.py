@@ -9,7 +9,7 @@ from kubernetes.client import models as k8s
 from base64 import b64encode
 
 from airflow.decorators import task
-from helper import CustomFeatureEmbedder
+
 # get the current Kubernetes namespace Airflow is running in
 namespace = conf.get("kubernetes", "NAMESPACE")
 
