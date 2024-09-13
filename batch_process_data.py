@@ -158,7 +158,7 @@ with DAG(
         return [f"rq worker --burst {str(x)} --with-scheduler --url redis://redis-master:6379" for x in retry_queues]
 
 
-    queue_jobs = KubernetesPodOperator(
+    queue_jobs = KubernetesPodOperator.partial(
         task_id="queue_jobs",
         affinity=io_selector,
         image="beltranalex928/subaligner-airflow-queue-jobs",
