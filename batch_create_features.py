@@ -724,8 +724,8 @@ with DAG(
         col.update_one(doc, {"$set": doc}, upsert=True)
 
     @task_group
-    def create_and_add_to_db(args):
-        scan_paths.expand(arguments=[[f"python scan_paths.py --disk {x}"] for x in args]) >> create(args) >> add_to_db(args)
+    def create_and_add_to_db(arg):
+        scan_paths.expand(arguments=f"python scan_paths.py --disk {arg}") >> create(arg) >> add_to_db(arg)
 
 
-    create_and_add_to_db.expand(args=list(range(1, 15)))
+    create_and_add_to_db.expand(arg=list(range(1, 15)))
