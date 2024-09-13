@@ -149,10 +149,28 @@ with DAG(
         do_xcom_push=True
     )
 
+    kwargs = {
+        "affinity": prefer_io_affinity,
+        "image": "beltranalex928/subaligner-airflow-extract-audio-subtitle",
+        "image_pull_policy": 'Always',
+        "in_cluster": True,
+        "namespace": namespace,
+        "volumes": data_volumes + media_volumes,
+        "volume_mounts": data_volume_mounts + media_volume_mounts,
+        "name": "extract_audio_subtitle",
+        "random_name_suffix": True,
+        "reattach_on_restart": True,
+        "is_delete_operator_pod": True,
+        "get_logs": True,
+        "log_events_on_failure": True,
+        "do_xcom_push": True
+    }
+    run_extraction = KubernetesPodOperator.partial(**(kwargs | {"task_id": "extract_features"}))
 
 
 
 
 
-
-    queue_features
+    queue_features >> run_extraction.expand(
+        arguments=[[f"rq worker --burst default --with-scheduler --url redis://redis-master:6379"]
+                   for x in range(1, 15)])
