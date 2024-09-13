@@ -729,4 +729,4 @@ with DAG(
         create(arg["create_features_kwargs"]) >> add_to_db(arg["add_to_db_kwargs"])
 
 
-    scan_paths >> create_and_add_to_db.expand("{{ task_instance.xcom_pull(task_ids='scan_paths', key='return_value')['output'] }}")
+    scan_paths >> create_and_add_to_db.expand(arg="{{ task_instance.xcom_pull(task_ids='scan_paths', key='return_value')['output'] }}")
