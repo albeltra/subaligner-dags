@@ -196,7 +196,7 @@ with DAG(
     run_failed_extraction = KubernetesPodOperator.partial(**(kwargs | {"task_id": "extract_failed_audio_subtitle"}))
 
     run_failed_extraction.expand(
-        arguments=[queue_failed_jobs(num_disks=NUM_DISKS, redis_host="redis-master", redis_port="6379")]
+        arguments=queue_failed_jobs(num_disks=NUM_DISKS, redis_host="redis-master", redis_port="6379")
     ) >> queue_jobs.expand(arguments=[[f"python queue_jobs.py --disk {x}"] for x in range(1, 15)]) >> run_extraction.expand(
         arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
                    for x in range(1, 15)])
