@@ -9,7 +9,7 @@ from kubernetes.client import models as k8s
 from base64 import b64encode
 
 from airflow.decorators import task
-from helper import add_to_db, CustomFeatureEmbedder
+from helper import CustomFeatureEmbedder
 # get the current Kubernetes namespace Airflow is running in
 namespace = conf.get("kubernetes", "NAMESPACE")
 
@@ -128,41 +128,8 @@ with DAG(
         concurrency=14,
         max_active_runs=1
 ) as dag:
-    @task(task_id="add_features_to_db")
-    def func(*kwargs):
-        add_to_db(**kwargs)
-    @task(task_id="requeue_failed_jobs")
-    def queue_failed_jobs(num_disks, redis_host="redis-master", redis_port="6379", max_attempts=3):
-        from redis import Redis
-        from rq import Queue
-        from rq.job import Job
 
-        redis_connection = Redis(host=redis_host, port=redis_port)
-        queues = {("disk" + str(i)): Queue(name="disk" + str(i),
-                                           connection=redis_connection,
-                                           default_timeout=100000) for i in range(1, num_disks + 1)}
-        retry_queues = []
-        for k, q in queues.items():
-            registry = q.failed_job_registry
-
-            any_queued = False
-            failed_jobs = registry.get_job_ids()
-            for job_id in failed_jobs:
-                job = Job.fetch(job_id, connection=redis_connection)
-                num_attempts = job.meta.get("num_attempts", 1)
-                if num_attempts < max_attempts:
-                    job.meta["num_attempts"] = num_attempts + 1
-                    job.save_meta()
-                    registry.requeue(job_id)
-                    any_queued = True
-
-            if any_queued:
-                retry_queues.append(k)
-            assert len(registry) == 0
-        return [f"rq worker --burst {str(x)} --with-scheduler --url redis://redis-master:6379" for x in retry_queues]
-
-
-    queue_jobs = KubernetesPodOperator(
+    scan_paths = KubernetesPodOperator(
         task_id="queue_jobs",
         affinity=io_selector,
         image="beltranalex928/subaligner-airflow-queue-jobs",
@@ -170,6 +137,7 @@ with DAG(
         in_cluster=True,
         namespace=namespace,
         cmds=["/bin/bash", "-c"],
+        arguments=["python queue_jobs.py"],
         volumes=data_volumes + disk_volumes + media_volumes,
         volume_mounts=data_volume_mounts + disk_volume_mounts + media_volume_mounts + disk_media_volume_mounts,
         name="queue_jobs",
@@ -181,27 +149,56 @@ with DAG(
         do_xcom_push=True
     )
 
-    kwargs = {
-        "affinity": prefer_io_affinity,
-        "image": "beltranalex928/subaligner-airflow-extract-audio-subtitle",
-        "image_pull_policy": 'Always',
-        "in_cluster": True,
-        "namespace": namespace,
-        "volumes": data_volumes + media_volumes,
-        "volume_mounts": data_volume_mounts + media_volume_mounts,
-        "name": "extract_audio_subtitle",
-        "random_name_suffix": True,
-        "reattach_on_restart": True,
-        "is_delete_operator_pod": True,
-        "get_logs": True,
-        "log_events_on_failure": True,
-        "do_xcom_push": True
-    }
-    run_extraction = KubernetesPodOperator.partial(**(kwargs | {"task_id": "extract_audio_subtitle"}))
-    run_failed_extraction = KubernetesPodOperator.partial(**(kwargs | {"task_id": "extract_failed_audio_subtitle"}))
+    @task(task_id="add_features_to_db")
+    def add_to_db(connection_string,
+                  db,
+                  audio_path,
+                  out_path,
+                  media_path,
+                  subtitle_path,
+                  kind,
+                  codec,
+                  version):
+        import h5py
+        import numpy as np
+        import pymongo
 
-    run_failed_extraction.expand(
-        arguments=[queue_failed_jobs(num_disks=NUM_DISKS, redis_host="redis-master", redis_port="6379")]
-    ) >> queue_jobs.expand(arguments=[[f"python queue_jobs.py --disk {x}"] for x in range(1, 15)]) >> run_extraction.expand(
-        arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
-                   for x in range(1, 15)])
+        try:
+            with h5py.File(out_path, 'r') as f:
+                length = f['data'].shape[0]
+                label_average = np.array(f['label_average'])
+                og_label_average = np.array(f['og_label_average'])
+        except FileNotFoundError:
+            return
+        client = pymongo.MongoClient(connection_string)
+        col = client[db]["v" + str(version)]
+        doc = {'audio_file_path': str(audio_path),
+               'features_file_path': str(out_path),
+               'media_file_path': media_path,
+               'length': length,
+               'subtitle_file_path': subtitle_path,
+               'extension': audio_path.split('.')[-2],
+               'subtitle': subtitle_path.split('.')[-3],
+               'kind': kind,
+               'codec': codec
+               }
+        col.update_one(doc, {
+            "$set": doc | {"og_label_average": float(og_label_average), "label_average": float(label_average)}},
+                       upsert=True)
+
+        col = client[db]["data"]
+        doc = {'audio_file_path': str(audio_path),
+               'features_file_path': str(out_path),
+               'media_file_path': media_path,
+               'length': length,
+               'subtitle_file_path': subtitle_path,
+               'subtitle': subtitle_path.split('.')[-3],
+               'extension': audio_path.split('.')[-2],
+               'kind': kind,
+               'codec': codec,
+               'version': version
+               }
+        col.update_one(doc, {"$set": doc}, upsert=True)
+
+    #
+
