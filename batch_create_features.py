@@ -728,4 +728,4 @@ with DAG(
         create(args["create_features_kwargs"]) >> add_to_db(args["add_to_db_kwargs"])
 
 
-    create_and_add_to_db.expand(scan_paths.expand(arguments=[[f"python scan_paths.py --disk {x}"] for x in range(1, 15)]))
+    create_and_add_to_db.expand([scan_paths.expand(arguments=[[f"python scan_paths.py --disk {x}"] for x in range(1, 15)])])
