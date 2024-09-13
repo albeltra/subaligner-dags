@@ -134,7 +134,7 @@ with DAG(
         task_id="queue_jobs",
         affinity=io_selector,
         # the Docker image to launch
-        image="beltranalex928/subaligner-airflow-extract-audio",
+        image="beltranalex928/subaligner-airflow-queue-jobs",
         image_pull_policy='Always',
         # launch the Pod on the same cluster as Airflow is running on
         in_cluster=True,
