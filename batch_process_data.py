@@ -129,39 +129,6 @@ data_volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeS
 data_volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/audio-subs", sub_path=None, read_only=False)]
 
 
-@task(task_id="requeue_failed_jobs")
-def queue_failed_jobs(num_disks, redis_host="redis-master", redis_port="6379", max_attempts=3):
-    from redis import Redis
-    from rq import Queue
-    from rq.job import Job
-
-    redis = Redis(host=redis_host, port=redis_port)
-    queues = {("disk" + str(i)): Queue(name="disk" + str(i),
-                                       connection=Redis(
-                                           host=redis_host,
-                                           port=redis_port),
-                                       default_timeout=100000) for i in range(1, NUM_DISKS + 1)}
-    retry_queues = []
-    for k, q in queues.items():
-        registry = q.failed_job_registry
-
-        # This is how to get jobs from FailedJobRegistry
-        any_queued = False
-        failed_jobs = registry.get_job_ids()
-        for job_id in failed_jobs:
-            job = Job.fetch(job_id, connection=redis)
-            num_attempts = job.meta.get("num_attempts", 1)
-            if num_attempts < max_attempts:
-                job.meta["num_attempts"] = num_attempts + 1
-                job.save_meta()
-                registry.requeue(job_id)
-                any_queued = True
-
-        if any_queued:
-            retry_queues.append(k)
-        assert len(registry) == 0
-    return retry_queues
-
 
 with DAG(
         start_date=datetime(2024, 9, 11),
@@ -173,7 +140,38 @@ with DAG(
         concurrency=14,
         max_active_runs=1
 ) as dag:
+    @task(task_id="requeue_failed_jobs")
+    def queue_failed_jobs(num_disks, redis_host="redis-master", redis_port="6379", max_attempts=3):
+        from redis import Redis
+        from rq import Queue
+        from rq.job import Job
 
+        redis = Redis(host=redis_host, port=redis_port)
+        queues = {("disk" + str(i)): Queue(name="disk" + str(i),
+                                           connection=Redis(
+                                               host=redis_host,
+                                               port=redis_port),
+                                           default_timeout=100000) for i in range(1, NUM_DISKS + 1)}
+        retry_queues = []
+        for k, q in queues.items():
+            registry = q.failed_job_registry
+
+            # This is how to get jobs from FailedJobRegistry
+            any_queued = False
+            failed_jobs = registry.get_job_ids()
+            for job_id in failed_jobs:
+                job = Job.fetch(job_id, connection=redis)
+                num_attempts = job.meta.get("num_attempts", 1)
+                if num_attempts < max_attempts:
+                    job.meta["num_attempts"] = num_attempts + 1
+                    job.save_meta()
+                    registry.requeue(job_id)
+                    any_queued = True
+
+            if any_queued:
+                retry_queues.append(k)
+            assert len(registry) == 0
+        return [f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379" for x in retry_queues]
 
     queue_jobs = KubernetesPodOperator(
         # unique id of the task within the DAG
@@ -259,8 +257,7 @@ with DAG(
     # )
 
     run_failed_extraction.expand(
-        arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
-                   for x in queue_failed_jobs(num_disks=NUM_DISKS, redis_host="redis-master", redis_port="6379")]
+        arguments=[queue_failed_jobs(num_disks=NUM_DISKS, redis_host="redis-master", redis_port="6379")]
     ) >> queue_jobs >> run_extraction.expand(
         arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
                    for x in range(1, 15)])
