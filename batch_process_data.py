@@ -150,8 +150,6 @@ with DAG(
                     job.save_meta()
                     registry.requeue(job_id)
                     any_queued = True
-                else:
-                    job.delete()
 
             if any_queued:
                 retry_queues.append(k)
