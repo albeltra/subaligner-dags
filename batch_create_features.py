@@ -164,7 +164,7 @@ with DAG(
     )
 
     kwargs = {
-        "affinity": anti_io_lean, 
+        "affinity": anti_io_lean,
         "image": "beltranalex928/subaligner-airflow-queue-jobs",
         "image_pull_policy": 'Always',
         "in_cluster": True,
@@ -180,9 +180,6 @@ with DAG(
         "do_xcom_push": True
     }
     create_features = KubernetesPodOperator.partial(**(kwargs | {"task_id": "create_features"}))
-
-
-
 
 
     queue_features >> create_features.expand(
