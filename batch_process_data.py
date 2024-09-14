@@ -1,14 +1,13 @@
+from base64 import b64encode
 from datetime import datetime
-import json
 
 from airflow import DAG
 from airflow.configuration import conf
+from airflow.decorators import task
 from airflow.kubernetes.secret import Secret
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
 from kubernetes.client import models as k8s
-from base64 import b64encode
 
-from airflow.decorators import task
 # get the current Kubernetes namespace Airflow is running in
 namespace = conf.get("kubernetes", "NAMESPACE")
 
@@ -132,11 +131,6 @@ with DAG(
         from redis import Redis
         from rq import Queue
         from rq.job import Job
-        import pymongo
-
-        client = pymongo.MongoClient(f'mongodb://root:l1w9QBVc6O@192.168.10.60:30227/?authSource=admin')
-        db = client.data_new
-        col = db.failed
 
         redis_connection = Redis(host=redis_host, port=redis_port)
         queues = {("disk" + str(i)): Queue(name="disk" + str(i),
@@ -151,12 +145,13 @@ with DAG(
             for job_id in failed_jobs:
                 job = Job.fetch(job_id, connection=redis_connection)
                 num_attempts = job.meta.get("num_attempts", 1)
-                print(job.kwargs)
                 if num_attempts < max_attempts:
                     job.meta["num_attempts"] = num_attempts + 1
-                    # job.save_meta()
-                    # registry.requeue(job_id)
+                    job.save_meta()
+                    registry.requeue(job_id)
                     any_queued = True
+                else:
+                    job.delete()
 
             if any_queued:
                 retry_queues.append(k)
