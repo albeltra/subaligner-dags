@@ -132,6 +132,11 @@ with DAG(
         from redis import Redis
         from rq import Queue
         from rq.job import Job
+        import pymongo
+
+        client = pymongo.MongoClient(f'mongodb://root:l1w9QBVc6O@192.168.10.60:30227/?authSource=admin')
+        db = client.data_new
+        col = db.failed
 
         redis_connection = Redis(host=redis_host, port=redis_port)
         queues = {("disk" + str(i)): Queue(name="disk" + str(i),
@@ -146,10 +151,11 @@ with DAG(
             for job_id in failed_jobs:
                 job = Job.fetch(job_id, connection=redis_connection)
                 num_attempts = job.meta.get("num_attempts", 1)
+                print(job.kwargs)
                 if num_attempts < max_attempts:
                     job.meta["num_attempts"] = num_attempts + 1
-                    job.save_meta()
-                    registry.requeue(job_id)
+                    # job.save_meta()
+                    # registry.requeue(job_id)
                     any_queued = True
 
             if any_queued:
@@ -199,6 +205,6 @@ with DAG(
 
     run_failed_extraction.expand(
         arguments=requeue_failed_jobs(num_disks=NUM_DISKS, redis_host="redis-master", redis_port="6379")
-    ) >> queue_jobs.expand(arguments=[[f"python queue_jobs.py --disk {x}"] for x in range(1, 15)]) >> run_extraction.expand(
+    ) >> queue_jobs.expand(arguments=[[f"python queue_jobs.py --disk {x}"] for x in range(1, NUM_DISKS + 1)]) >> run_extraction.expand(
         arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
-                   for x in range(1, 15)])
+                   for x in range(1, NUM_DISKS + 1)])
