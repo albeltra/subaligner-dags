@@ -160,7 +160,7 @@ with DAG(
 
 
     queue_jobs = KubernetesPodOperator.partial(
-        task_id="queue_jobs",
+        task_id="queue_new_extraction_jobs",
         affinity=io_selector,
         image="beltranalex928/subaligner-airflow-queue-jobs",
         image_pull_policy='Always',
