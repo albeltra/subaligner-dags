@@ -131,6 +131,11 @@ with DAG(
         from redis import Redis
         from rq import Queue
         from rq.job import Job
+        import pymongo
+
+        client = pymongo.MongoClient(f'mongodb://root:l1w9QBVc6O@192.168.10.60:30227/?authSource=admin')
+        db = client.data_new
+        col = db.failed
 
         redis_connection = Redis(host=redis_host, port=redis_port)
         queues = {("disk" + str(i)): Queue(name="disk" + str(i),
@@ -150,6 +155,10 @@ with DAG(
                     job.save_meta()
                     registry.requeue(job_id)
                     any_queued = True
+                else:
+                    doc = {"media_file_path": job.get_id()}
+                    col.update_one(doc, {"$set": doc}, upsert=True)
+                    job.delete()
 
             if any_queued:
                 retry_queues.append(k)
