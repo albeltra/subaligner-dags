@@ -186,7 +186,7 @@ with DAG(
     )
 
     kwargs = {
-        "affinity": prefer_io_affinity,
+        "affinity": network_weighted_prefer_compute_affinity,
         "image": "beltranalex928/subaligner-airflow-extract-audio-subtitle",
         "image_pull_policy": 'Always',
         "in_cluster": True,
