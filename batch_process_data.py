@@ -108,11 +108,11 @@ nfs_data_volumes = [
     k8s.V1Volume(name="data", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-data", server="192.168.10.6"))]
 data_volumes = [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data"))]
 data_volume_mounts = [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
-
-nfs_data_volumes += [k8s.V1Volume(name="audio-subs", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-audio-subs",
+ 
+nfs_data_volumes += [k8s.V1Volume(name="subaligner-audio-subs", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-audio-subs",
                                                                                server="192.168.10.6"))]
-data_volumes += [k8s.V1Volume(name="audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/subaligner-audio-subs"))]
-data_volume_mounts += [k8s.V1VolumeMount(name="audio-subs", mount_path="/subaligner-audio-subs", sub_path=None, read_only=False)]
+data_volumes += [k8s.V1Volume(name="subaligner-audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/subaligner-audio-subs"))]
+data_volume_mounts += [k8s.V1VolumeMount(name="subaligner-audio-subs", mount_path="/subaligner-audio-subs", sub_path=None, read_only=False)]
 
 
 with DAG(
