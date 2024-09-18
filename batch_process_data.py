@@ -127,45 +127,45 @@ with DAG(
         concurrency=14,
         max_active_runs=1
 ) as dag:
-    @task(task_id="requeue_failed_jobs")
-    def requeue_failed_jobs(num_disks, redis_host="redis-master", redis_port="6379", max_attempts=3):
-        from redis import Redis
-        from rq import Queue
-        from rq.job import Job
-        import pymongo
-
-        client = pymongo.MongoClient(f'mongodb://root:l1w9QBVc6O@192.168.10.60:30227/?authSource=admin')
-        db = client.data_new
-        col = db.failed
-
-        redis_connection = Redis(host=redis_host, port=redis_port)
-        queues = {("disk" + str(i)): Queue(name="disk" + str(i),
-                                           connection=redis_connection,
-                                           default_timeout=100000) for i in range(1, num_disks + 1)}
-        retry_queues = []
-        for k, q in queues.items():
-            registry = q.failed_job_registry
-
-            any_queued = False
-            failed_jobs = registry.get_job_ids()
-            for job_id in failed_jobs:
-                job = Job.fetch(job_id, connection=redis_connection)
-                num_attempts = job.meta.get("num_attempts", 1)
-                if num_attempts < max_attempts:
-                    job.meta["num_attempts"] = num_attempts + 1
-                    job.save_meta()
-                    registry.requeue(job_id)
-                    any_queued = True
-                else:
-                    doc = {"media_file_path": job.get_id()}
-                    col.update_one(doc, {"$set": doc}, upsert=True)
-                    job.delete()
-
-            if any_queued:
-                retry_queues.append(k)
-        if len(retry_queues) == 0:
-            retry_queues = ["disk1"]
-        return [[f"rq worker --burst {str(x)} --with-scheduler --url redis://redis-master:6379"] for x in retry_queues]
+    # @task(task_id="requeue_failed_jobs")
+    # def requeue_failed_jobs(num_disks, redis_host="redis-master", redis_port="6379", max_attempts=3):
+    #     from redis import Redis
+    #     from rq import Queue
+    #     from rq.job import Job
+    #     import pymongo
+    #
+    #     client = pymongo.MongoClient(f'mongodb://root:l1w9QBVc6O@192.168.10.60:30227/?authSource=admin')
+    #     db = client.data_new
+    #     col = db.failed
+    #
+    #     redis_connection = Redis(host=redis_host, port=redis_port)
+    #     queues = {("disk" + str(i)): Queue(name="disk" + str(i),
+    #                                        connection=redis_connection,
+    #                                        default_timeout=100000) for i in range(1, num_disks + 1)}
+    #     retry_queues = []
+    #     for k, q in queues.items():
+    #         registry = q.failed_job_registry
+    #
+    #         any_queued = False
+    #         failed_jobs = registry.get_job_ids()
+    #         for job_id in failed_jobs:
+    #             job = Job.fetch(job_id, connection=redis_connection)
+    #             num_attempts = job.meta.get("num_attempts", 1)
+    #             if num_attempts < max_attempts:
+    #                 job.meta["num_attempts"] = num_attempts + 1
+    #                 job.save_meta()
+    #                 registry.requeue(job_id)
+    #                 any_queued = True
+    #             else:
+    #                 doc = {"media_file_path": job.get_id()}
+    #                 col.update_one(doc, {"$set": doc}, upsert=True)
+    #                 job.delete()
+    #
+    #         if any_queued:
+    #             retry_queues.append(k)
+    #     if len(retry_queues) == 0:
+    #         retry_queues = ["disk1"]
+    #     return [[f"rq worker --burst {str(x)} --with-scheduler --url redis://redis-master:6379"] for x in retry_queues]
 
 
     queue_jobs = KubernetesPodOperator.partial(
@@ -203,11 +203,13 @@ with DAG(
         "log_events_on_failure": True,
         "do_xcom_push": True
     }
-    run_extraction = KubernetesPodOperator.partial(**(kwargs | {"task_id": "extract_audio_and_subtitle"}))
-    run_failed_extraction = KubernetesPodOperator.partial(**(kwargs | {"task_id": "extract_failed_audio_and_subtitle"}))
+    # run_extraction = KubernetesPodOperator.partial(**(kwargs | {"task_id": "extract_audio_and_subtitle"}))
+    # run_failed_extraction = KubernetesPodOperator.partial(**(kwargs | {"task_id": "extract_failed_audio_and_subtitle"}))
 
-    run_failed_extraction.expand(
-        arguments=requeue_failed_jobs(num_disks=NUM_DISKS, redis_host="redis-master", redis_port="6379")
-    ) >> queue_jobs.expand(arguments=[[f"python queue_jobs.py --disk {x}"] for x in range(1, NUM_DISKS + 1)]) >> run_extraction.expand(
-        arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
-                   for x in range(1, NUM_DISKS + 1)])
+    # run_failed_extraction.expand(
+    #     arguments=requeue_failed_jobs(num_disks=NUM_DISKS, redis_host="redis-master", redis_port="6379")
+    # ) >> queue_jobs.expand(arguments=[[f"python queue_jobs.py --disk {x}"] for x in range(1, NUM_DISKS + 1)]) >> run_extraction.expand(
+    #     arguments=[[f"rq worker --burst disk{str(x)} --with-scheduler --url redis://redis-master:6379"]
+    #                for x in range(1, NUM_DISKS + 1)])
+
+    queue_jobs.expand(arguments=[["sleep 1h"]])
