@@ -74,7 +74,7 @@ network_weighted_prefer_compute_affinity = k8s.V1Affinity(
                                               values=["compute-worker-lean"])])
                                           ),
             k8s.V1PreferredSchedulingTerm(weight=25, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute"])])
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-opnsense"])])
                                           ),
             k8s.V1PreferredSchedulingTerm(weight=50, preference=k8s.V1NodeSelectorTerm(match_expressions=[
                 k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In",
@@ -108,7 +108,7 @@ nfs_data_volumes = [
     k8s.V1Volume(name="data", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-data", server="192.168.10.6"))]
 data_volumes = [k8s.V1Volume(name="data", host_path=k8s.V1HostPathVolumeSource(path="/data"))]
 data_volume_mounts = [k8s.V1VolumeMount(name="data", mount_path="/data", sub_path=None, read_only=False)]
- 
+
 nfs_data_volumes += [k8s.V1Volume(name="subaligner-audio-subs", nfs=k8s.V1NFSVolumeSource(path=f"/mnt/user/subaligner-audio-subs",
                                                                                server="192.168.10.6"))]
 data_volumes += [k8s.V1Volume(name="subaligner-audio-subs", host_path=k8s.V1HostPathVolumeSource(path="/subaligner-audio-subs"))]
