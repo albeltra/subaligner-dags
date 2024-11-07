@@ -26,4 +26,4 @@ with DAG(
         return kwargs["dag_run"].get_task_instance('start').start_date
 
 
-    test_run >> test_run
+    test_run >> [test_run]
