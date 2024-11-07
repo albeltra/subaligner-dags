@@ -21,6 +21,7 @@ with DAG(
         import ast
         import IP2Location
         import IP2Proxy
+        import pymongo
         from time import sleep
         from dateutil import parser
         from ua_parser import user_agent_parser
@@ -77,7 +78,7 @@ with DAG(
         print(response)
         if 'data' in response:
             location_db = IP2Location.IP2Location("/opt/airflow/logs/IP2LOCATION-LITE-DB11.IPV6.BIN", "SHARED_MEMORY")
-            proxy_db = IP2Location.IP2Location("/opt/airflow/logs/IP2PROXY-LITE-PX11.BIN", "SHARED_MEMORY")
+            proxy_db = IP2Proxy.IP2Proxy("/opt/airflow/logs/IP2PROXY-LITE-PX11.BIN")
             results = response['data']['viewer']['zones'][0]['firewallEventsAdaptive']
             final_results = []
             for result in results:
