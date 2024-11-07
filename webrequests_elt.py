@@ -98,7 +98,9 @@ with DAG(
                     if proxy_rec["is_proxy"]:
                         new_proxy = {("" if k.startswith("proxy") else "proxy_") + k: v for k, v in proxy_rec.items()} 
                     else:
-                        new_proxy = {"is_proxy": 0}
+                        new_proxy = {"is_proxy": False}
+
+                    new_proxy["is_proxy"] = bool(new_proxy["is_proxy"])
                     final_results.append(result | location_rec | new_proxy)
 
             if len(final_results) > 0:
