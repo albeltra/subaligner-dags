@@ -98,7 +98,7 @@ with DAG(
                     final_results.append(result | location_rec | proxy_rec)
 
             if len(final_results) > 0:
-                operations = [pymongo.UpdateOne(record, record, upsert=True) for record in final_results]
+                operations = [pymongo.UpdateOne(record, {"$set": record}, upsert=True) for record in final_results]
                 getattr(client.logs, website).bulk_write(operations)
         sleep(10)
         return response
