@@ -25,6 +25,7 @@ with DAG(
     def test_run(**kwargs):
         start_date = kwargs["dag_run"].execution_date
         start_time = start_date
+        print( kwargs["dag_run"].start_date)
         print(start_date)
         print(start_date.replace(hour=0, minute=0, second=0, microsecond=0,
                                                      tzinfo=timezone.utc))
