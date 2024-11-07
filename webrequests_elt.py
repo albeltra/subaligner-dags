@@ -5,10 +5,6 @@ from airflow.configuration import conf
 from airflow.decorators import task
 from airflow.models import Variable
 
-# get the current Kubernetes namespace Airflow is running in
-namespace = conf.get("kubernetes", "NAMESPACE")
-
-
 with DAG(
         start_date=datetime(2024, 11, 6),
         catchup=True,
@@ -18,47 +14,35 @@ with DAG(
         concurrency=1,
         max_active_runs=1
 ) as dag:
-    @task(task_id="test_run")
-    def test_run(**kwargs):
+    @task(task_id="extract_data")
+    def extract_data(start, end, zone, ips, website):
         import requests
         import json
-        end_date = kwargs["dag_run"].execution_date
-        start_date = end_date - timedelta(hours=1)
-
-        print(kwargs["dag_run"].start_date)
-        print(kwargs["dag_run"].execution_date)
-
-        start = (start_date - timedelta(days=1)).replace(tzinfo=timezone.utc, microsecond=0)
-        end = end_date.replace(tzinfo=timezone.utc, microsecond=0)
-        print(Variable.get("zones", deserialize_json=True))
-        print(Variable.get("hosts"))
-        print(Variable.get("hosts", deserialize_json=True))
-        zone = ""
         data = {
             "query": """query ListFirewallEvents($zoneTag: string, $filter: FirewallEventsAdaptiveFilter_InputObject) {
-                    viewer {
-                      zones(filter: { zoneTag: $zoneTag }) {
-                        firewallEventsAdaptive(
-                          filter: $filter
-                          limit: 10000
-                          orderBy: [datetime_DESC]
-                        ) {
-                          action
-                          clientAsn
-                          clientCountryName
-                          clientRequestHTTPHost
-                          clientIP
-                          clientRequestPath
-                          clientRequestHTTPHost
-                          clientRequestScheme
-                          clientRequestQuery
-                          datetime
-                          source
-                          userAgent
-                        }
-                      }
-                    }
-                  }""",
+                                viewer {
+                                  zones(filter: { zoneTag: $zoneTag }) {
+                                    firewallEventsAdaptive(
+                                      filter: $filter
+                                      limit: 10000
+                                      orderBy: [datetime_DESC]
+                                    ) {
+                                      action
+                                      clientAsn
+                                      clientCountryName
+                                      clientRequestHTTPHost
+                                      clientIP
+                                      clientRequestPath
+                                      clientRequestHTTPHost
+                                      clientRequestScheme
+                                      clientRequestQuery
+                                      datetime
+                                      source
+                                      userAgent
+                                    }
+                                  }
+                                }
+                              }""",
             "variables": {
                 "zoneTag": zone,
                 "filter": {
@@ -75,6 +59,7 @@ with DAG(
         }
 
         response = requests.post(url, headers=headers, data=json.dumps(data)).json()
+        print(response)
         # if 'data' in response:
         #     results = response['data']['viewer']['zones'][0]['firewallEventsAdaptive']
         #     final_results = []
@@ -91,8 +76,38 @@ with DAG(
         #                 rec['latitude'] = float(rec['latitude'])
         #
         #                 final_results.append(result | rec)
-        print(response)
-        return True
+        # if len(final_results) > 0:
+        #     getattr(client.logs, website).insert_many(final_results)
+        return response
 
 
-    [test_run()]
+    @task(task_id="test_run")
+    def test_run(**kwargs):
+        import requests
+        import json
+        import socket
+        end_date = kwargs["dag_run"].execution_date
+        start_date = end_date - timedelta(hours=1)
+
+        print(kwargs["dag_run"].start_date)
+        print(kwargs["dag_run"].execution_date)
+
+        start = (start_date - timedelta(days=1)).replace(tzinfo=timezone.utc, microsecond=0)
+        end = end_date.replace(tzinfo=timezone.utc, microsecond=0)
+        web_zones = Variable.get("zones", deserialize_json=True)
+        hosts = Variable.get("hosts", deserialize_json=True)
+
+        try:
+            ips = [requests.get('https://checkip.amazonaws.com').text.strip()]
+        except:
+            ips = []
+        for x in hosts:
+            try:
+                ips.append(socket.gethostbyname_ex(x)[2][0])
+            except socket.gaierror:
+                continue
+
+        return [{"start": start, "end": end, "zone": zone, "ips": ips, "website": website} for website, zone in web_zones.items()]
+
+
+    extract_data.expand(arguments=test_run()) 
