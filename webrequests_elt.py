@@ -15,7 +15,7 @@ secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 with DAG(
         start_date=datetime(2024, 11, 6),
         catchup=True,
-        schedule_interval="*/5 * * * *",
+        schedule_interval="*/2 * * * *",
         dag_id="WebRequests_ELT",
         render_template_as_native_obj=False,
         concurrency=1,
@@ -71,12 +71,12 @@ with DAG(
         headers = {
             "Content-Type": "application/json",
             "X-Auth-Email": "",
-            "X-Auth-Key": "" 
+            "X-Auth-Key": ""
         }
 
         response = requests.post(url, headers=headers, data=json.dumps(data)).json()
         # ['data']['viewer']['zones'][0]['firewallEventsAdaptive']
-        print(response["data"])
+        print(response)
         return True
 
 
