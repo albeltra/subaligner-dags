@@ -25,6 +25,7 @@ with DAG(
         from time import sleep
         from dateutil import parser
         from ua_parser import user_agent_parser
+        from pytz import timezone as tz
         print(args)
         start = args["start"]
         end = args["end"]
@@ -83,7 +84,7 @@ with DAG(
             final_results = []
             for result in results:
                 if result["clientIP"] not in ips:
-                    result['datetime'] = parser.parse(result['datetime']).astimezone(timezone('America/Los_Angeles'))
+                    result['datetime'] = parser.parse(result['datetime']).astimezone(tz('America/Los_Angeles'))
                     ua = user_agent_parser.Parse(result["userAgent"])
                     for k in ["os", "device", "user_agent"]:
                         result["ua_" + k] = ua[k]["family"]
