@@ -23,6 +23,7 @@ with DAG(
         zone = args["zone"]
         ips = args["ips"]
         website = args["website"]
+        print(args)
         data = {
             "query": """query ListFirewallEvents($zoneTag: string, $filter: FirewallEventsAdaptiveFilter_InputObject) {
                                 viewer {
