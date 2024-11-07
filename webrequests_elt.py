@@ -25,10 +25,18 @@ with DAG(
     def test_run(**kwargs):
         execution_date = kwargs["dag_run"].execution_date
         start_date = kwargs["dag_run"].start_date
+        start_time = start_date
         print(execution_date)
         print(start_date)
         print(start_date.replace(hour=0, minute=0, second=0, microsecond=0,
                                                      tzinfo=timezone.utc))
+
+        cur_end_time = start_time + timedelta(seconds=28800)
+
+        start = (cur_end_time - timedelta(days=1)).replace(tzinfo=timezone.utc, microsecond=0)
+        end = cur_end_time.replace(tzinfo=timezone.utc, microsecond=0)
+        print(start, end)
+
         # print(start_time - timedelta(days=1))
         return True
 
