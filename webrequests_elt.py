@@ -21,9 +21,9 @@ with DAG(
         concurrency=1,
         max_active_runs=1
 ) as dag:
-    @task(task_id="test")
-    def test(**kwargs):
+    @task(task_id="test_run")
+    def test_run(**kwargs):
         return kwargs["dag_run"].get_task_instance('start').start_date
 
 
-    test >> test
+    test_run >> test_run
