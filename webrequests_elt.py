@@ -4,6 +4,7 @@ from airflow import DAG
 from airflow.configuration import conf
 from airflow.decorators import task
 from airflow.kubernetes.secret import Secret
+from airflow.models import Variable
 
 # get the current Kubernetes namespace Airflow is running in
 namespace = conf.get("kubernetes", "NAMESPACE")
@@ -33,6 +34,9 @@ with DAG(
 
         start = (start_date - timedelta(days=1)).replace(tzinfo=timezone.utc, microsecond=0)
         end = end_date.replace(tzinfo=timezone.utc, microsecond=0)
+        print(Variable.get("zones", deserialize_json=True))
+        print(Variable.get("hosts"))
+        print(Variable.get("hosts", deserialize_json=True)) 
         zone = ""
         data = {
             "query": """query ListFirewallEvents($zoneTag: string, $filter: FirewallEventsAdaptiveFilter_InputObject) {
@@ -75,7 +79,22 @@ with DAG(
         }
 
         response = requests.post(url, headers=headers, data=json.dumps(data)).json()
-        # ['data']['viewer']['zones'][0]['firewallEventsAdaptive']
+        # if 'data' in response:
+        #     results = response['data']['viewer']['zones'][0]['firewallEventsAdaptive']
+        #     final_results = []
+        #     for result in results:
+        #         if result["clientIP"] not in ips:
+        #             result['datetime'] = parser.parse(result['datetime']).astimezone(timezone('America/Los_Angeles'))
+        #             if all([cur_agent not in result["userAgent"] for cur_agent in bad_agents]):
+        #                 ua = user_agent_parser.Parse(result["userAgent"])
+        #                 for k in ["os", "device", "user_agent"]:
+        #                     result["ua_" + k] = ua[k]["family"]
+        #
+        #                 rec = ast.literal_eval(str(database.get_all(result["clientIP"])))
+        #                 rec['longitude'] = float(rec['longitude'])
+        #                 rec['latitude'] = float(rec['latitude'])
+        #
+        #                 final_results.append(result | rec)
         print(response)
         return True
 
