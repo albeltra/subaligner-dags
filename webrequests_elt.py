@@ -1,7 +1,6 @@
 from datetime import datetime, timezone, timedelta
 
 from airflow import DAG
-from airflow.configuration import conf
 from airflow.decorators import task
 from airflow.models import Variable
 
@@ -96,7 +95,7 @@ with DAG(
                     proxy_rec = ast.literal_eval(str(proxy_db.get_all(result["clientIP"])))
 
                     if proxy_rec["is_proxy"]:
-                        new_proxy = {("" if k.startswith("proxy") else "proxy_") + k: v for k, v in proxy_rec.items()} 
+                        new_proxy = {("" if k.startswith("proxy") else "proxy_") + k: v for k, v in proxy_rec.items()}
                     else:
                         new_proxy = {"is_proxy": False}
 
@@ -113,7 +112,6 @@ with DAG(
     @task(task_id="fetch_variables")
     def fetch_variables(**kwargs):
         import requests
-        import json
         import socket
         end_date = kwargs["dag_run"].execution_date
         start_date = end_date - timedelta(hours=1)
