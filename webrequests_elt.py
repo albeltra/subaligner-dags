@@ -23,7 +23,7 @@ with DAG(
 ) as dag:
     @task(task_id="test_run")
     def test_run(**kwargs):
-        print(kwargs["dag_run"])
+        print(kwargs["dag_run"].__dict__)
         return True
 
 
