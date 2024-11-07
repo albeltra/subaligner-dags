@@ -8,7 +8,7 @@ from airflow.models import Variable
 with DAG(
         start_date=datetime(2024, 11, 6),
         catchup=True,
-        schedule_interval="*/2 * * * *",
+        schedule_interval="0 * * * *",
         dag_id="WebRequests_ELT",
         render_template_as_native_obj=False,
         concurrency=1,
@@ -18,12 +18,13 @@ with DAG(
     def extract_data(args):
         import requests
         import json
+        import IP2Location
+        import IP2Proxy
         from time import sleep
         print(args)
         start = args["start"]
         end = args["end"]
         zone = args["zone"]
-        sleep_time = args["sleep_time"]
         ips = args["ips"]
         website = args["website"]
         mongo_url = Variable.get("mongo_url")
@@ -68,7 +69,6 @@ with DAG(
             "X-Auth-Email": f"{email}",
             "X-Auth-Key": f"{api_key}"
         }
-        # sleep(sleep_time)
         response = requests.post(url, headers=headers, data=json.dumps(data)).json()
         print(response)
         # if 'data' in response:
@@ -89,6 +89,7 @@ with DAG(
         #                 final_results.append(result | rec)
         # if len(final_results) > 0:
         #     getattr(client.logs, website).insert_many(final_results)
+        sleep(10)
         return response
 
 
@@ -118,7 +119,7 @@ with DAG(
             except socket.gaierror:
                 continue
 
-        return [{"start": start, "end": end, "zone": zone, "ips": ips, "website": website, "sleep_time": i * 30} for i, (website, zone) in enumerate(web_zones.items())]
+        return [{"start": start, "end": end, "zone": zone, "ips": ips, "website": website} for website, zone in web_zones.items()]
 
 
     extract_data.expand(args=test_run())
