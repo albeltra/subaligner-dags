@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from airflow import DAG
 from airflow.configuration import conf
@@ -23,10 +23,13 @@ with DAG(
 ) as dag:
     @task(task_id="test_run")
     def test_run(**kwargs):
-        print(kwargs["dag_run"])
-        print(kwargs["dag_run"].__dict__)
-        print(kwargs["dag_run"].execution_date)
-        print(kwargs["dag_run"].start_date)
+        execution_date = kwargs["dag_run"].execution_date
+        start_date = kwargs["dag_run"].start_date
+        print(execution_date)
+        print(start_date)
+        print(start_date.replace(hour=0, minute=0, second=0, microsecond=0,
+                                                     tzinfo=timezone.utc))
+        # print(start_time - timedelta(days=1))
         return True
 
 
