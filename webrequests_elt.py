@@ -1,6 +1,5 @@
 from datetime import datetime, timezone, timedelta
 
-import pymongo
 from airflow import DAG
 from airflow.configuration import conf
 from airflow.decorators import task
