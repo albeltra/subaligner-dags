@@ -23,7 +23,7 @@ with DAG(
 ) as dag:
     @task(task_id="test")
     def test(**kwargs):
-        print(kwargs["dag_run"].get_task_instance('start').start_date)
+        return kwargs["dag_run"].get_task_instance('start').start_date
 
 
     test
