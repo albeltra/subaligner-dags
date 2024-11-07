@@ -18,12 +18,16 @@ with DAG(
     def extract_data(args):
         import requests
         import json
+        from time import sleep
         start = args["start"]
         end = args["end"]
         zone = args["zone"]
+        sleep_time = args["sleep"]
         ips = args["ips"]
         website = args["website"]
-        print(args)
+        mongo_url = Variable.get("mongo_url")
+        api_key = Variable.get("api_key")
+        email = Variable.get("email")
         data = {
             "query": """query ListFirewallEvents($zoneTag: string, $filter: FirewallEventsAdaptiveFilter_InputObject) {
                                 viewer {
@@ -60,12 +64,12 @@ with DAG(
         url = "https://api.cloudflare.com/client/v4/graphql/"
         headers = {
             "Content-Type": "application/json",
-            "X-Auth-Email": "",
-            "X-Auth-Key": ""
+            "X-Auth-Email": f"{email}",
+            "X-Auth-Key": f"{api_key}"
         }
-
+        sleep(sleep_time)
         response = requests.post(url, headers=headers, data=json.dumps(data)).json()
-        print(response)
+        print(response) 
         # if 'data' in response:
         #     results = response['data']['viewer']['zones'][0]['firewallEventsAdaptive']
         #     final_results = []
@@ -113,7 +117,7 @@ with DAG(
             except socket.gaierror:
                 continue
 
-        return [{"start": start, "end": end, "zone": zone, "ips": ips, "website": website} for website, zone in web_zones.items()]
+        return [{"start": start, "end": end, "zone": zone, "ips": ips, "website": website, "sleep_time": i*30} for i,(website, zone) in enumerate(web_zones.items())]
 
 
     extract_data.expand(args=test_run())
