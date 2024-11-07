@@ -15,7 +15,7 @@ secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 with DAG(
         start_date=datetime(2024, 11, 6),
         catchup=True,
-        schedule_interval="*/5 * * * *",
+        schedule_interval="0 */2 * * *",
         dag_id="WebRequests_ELT",
         render_template_as_native_obj=False,
         concurrency=1,
@@ -23,20 +23,12 @@ with DAG(
 ) as dag:
     @task(task_id="test_run")
     def test_run(**kwargs):
-        start_date = kwargs["dag_run"].execution_date
-        start_time = start_date
-        print( kwargs["dag_run"].start_date)
-        print(start_date)
-        print(start_date.replace(hour=0, minute=0, second=0, microsecond=0,
-                                                     tzinfo=timezone.utc))
+        end_date = kwargs["dag_run"].execution_date
+        start_date = end_date - timedelta(hours=1)
 
-        cur_end_time = start_time + timedelta(seconds=28800)
-
-        start = (cur_end_time - timedelta(days=1)).replace(tzinfo=timezone.utc, microsecond=0)
-        end = cur_end_time.replace(tzinfo=timezone.utc, microsecond=0)
+        start = (start_date - timedelta(days=1)).replace(tzinfo=timezone.utc, microsecond=0)
+        end = end_date.replace(tzinfo=timezone.utc, microsecond=0)
         print(start, end)
-
-        # print(start_time - timedelta(days=1))
         return True
 
 
