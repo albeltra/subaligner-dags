@@ -25,8 +25,8 @@ with DAG(
     def test_run(**kwargs):
         print(kwargs["dag_run"])
         print(kwargs["dag_run"].__dict__)
-        print(kwargs["dag_run"]["execution_date"])
-        print(kwargs["dag_run"]["start_date"])
+        print(kwargs["dag_run"].execution_date)
+        print(kwargs["dag_run"].start_date)
         return True
 
 
