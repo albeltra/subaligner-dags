@@ -1,5 +1,6 @@
 from datetime import datetime, timezone, timedelta
 
+import pymongo
 from airflow import DAG
 from airflow.configuration import conf
 from airflow.decorators import task
@@ -18,9 +19,12 @@ with DAG(
     def extract_data(args):
         import requests
         import json
+        import ast
         import IP2Location
         import IP2Proxy
         from time import sleep
+        from dateutil import parser
+        from ua_parser import user_agent_parser
         print(args)
         start = args["start"]
         end = args["end"]
@@ -30,6 +34,7 @@ with DAG(
         mongo_url = Variable.get("mongo_url")
         api_key = Variable.get("api_key")
         email = Variable.get("email")
+        client = pymongo.MongoClient(mongo_url)
         data = {
             "query": """query ListFirewallEvents($zoneTag: string, $filter: FirewallEventsAdaptiveFilter_InputObject) {
                                 viewer {
@@ -71,24 +76,29 @@ with DAG(
         }
         response = requests.post(url, headers=headers, data=json.dumps(data)).json()
         print(response)
-        # if 'data' in response:
-        #     results = response['data']['viewer']['zones'][0]['firewallEventsAdaptive']
-        #     final_results = []
-        #     for result in results:
-        #         if result["clientIP"] not in ips:
-        #             result['datetime'] = parser.parse(result['datetime']).astimezone(timezone('America/Los_Angeles'))
-        #             if all([cur_agent not in result["userAgent"] for cur_agent in bad_agents]):
-        #                 ua = user_agent_parser.Parse(result["userAgent"])
-        #                 for k in ["os", "device", "user_agent"]:
-        #                     result["ua_" + k] = ua[k]["family"]
-        #
-        #                 rec = ast.literal_eval(str(database.get_all(result["clientIP"])))
-        #                 rec['longitude'] = float(rec['longitude'])
-        #                 rec['latitude'] = float(rec['latitude'])
-        #
-        #                 final_results.append(result | rec)
-        # if len(final_results) > 0:
-        #     getattr(client.logs, website).insert_many(final_results)
+        if 'data' in response:
+            location_db = IP2Location.IP2Location("/opt/airflow/logs/IP2LOCATION-LITE-DB11.IPV6.BIN", "SHARED_MEMORY")
+            proxy_db = IP2Location.IP2Location("/opt/airflow/logs/IP2PROXY-LITE-PX11.BIN", "SHARED_MEMORY")
+            results = response['data']['viewer']['zones'][0]['firewallEventsAdaptive']
+            final_results = []
+            for result in results:
+                if result["clientIP"] not in ips:
+                    result['datetime'] = parser.parse(result['datetime']).astimezone(timezone('America/Los_Angeles'))
+                    ua = user_agent_parser.Parse(result["userAgent"])
+                    for k in ["os", "device", "user_agent"]:
+                        result["ua_" + k] = ua[k]["family"]
+
+                    location_rec = ast.literal_eval(str(location_db.get_all(result["clientIP"])))
+                    location_rec['longitude'] = float(location_rec['longitude'])
+                    location_rec['latitude'] = float(location_rec['latitude'])
+
+                    proxy_rec = ast.literal_eval(str(proxy_db.get_all(result["clientIP"])))
+
+                    final_results.append(result | location_rec | proxy_rec)
+
+            if len(final_results) > 0:
+                operations = [pymongo.UpdateOne(record, record, upsert=True) for record in final_results]
+                getattr(client.logs, website).bulk_write(operations)
         sleep(10)
         return response
 
