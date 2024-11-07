@@ -13,7 +13,7 @@ name = "subaligner"
 secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
 with DAG(
-        start_date=datetime(2024, 11, 3),
+        start_date=datetime(2024, 11, 6),
         catchup=True,
         schedule_interval="*/5 * * * *",
         dag_id="WebRequests_ELT",
