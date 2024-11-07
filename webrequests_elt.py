@@ -3,15 +3,11 @@ from datetime import datetime, timezone, timedelta
 from airflow import DAG
 from airflow.configuration import conf
 from airflow.decorators import task
-from airflow.kubernetes.secret import Secret
 from airflow.models import Variable
 
 # get the current Kubernetes namespace Airflow is running in
 namespace = conf.get("kubernetes", "NAMESPACE")
 
-# set the name that will be printed
-name = "subaligner"
-secrets = [Secret("env", "MONGO_PASSWORD", "mongo-password", "password")]
 
 with DAG(
         start_date=datetime(2024, 11, 6),
@@ -36,7 +32,7 @@ with DAG(
         end = end_date.replace(tzinfo=timezone.utc, microsecond=0)
         print(Variable.get("zones", deserialize_json=True))
         print(Variable.get("hosts"))
-        print(Variable.get("hosts", deserialize_json=True)) 
+        print(Variable.get("hosts", deserialize_json=True))
         zone = ""
         data = {
             "query": """query ListFirewallEvents($zoneTag: string, $filter: FirewallEventsAdaptiveFilter_InputObject) {
