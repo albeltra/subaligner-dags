@@ -95,7 +95,11 @@ with DAG(
 
                     proxy_rec = ast.literal_eval(str(proxy_db.get_all(result["clientIP"])))
 
-                    final_results.append(result | location_rec | {"proxy_" + k: v for k, v in proxy_rec.items()})
+                    if proxy_rec["is_proxy"]:
+                        new_proxy = {("" if k.startswith("proxy") else "proxy_") + k: v for k, v in proxy_rec.items()} 
+                    else:
+                        new_proxy = {"is_proxy": 0}
+                    final_results.append(result | location_rec | new_proxy)
 
             if len(final_results) > 0:
                 operations = [pymongo.UpdateOne(record, {"$set": record}, upsert=True) for record in final_results]
