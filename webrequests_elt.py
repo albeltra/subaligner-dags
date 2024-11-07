@@ -15,9 +15,14 @@ with DAG(
         max_active_runs=1
 ) as dag:
     @task(task_id="extract_data")
-    def extract_data(start, end, zone, ips, website):
+    def extract_data(args):
         import requests
         import json
+        start = args["start"]
+        end = args["end"]
+        zone = args["zone"]
+        ips = args["ips"]
+        website = args["website"]
         data = {
             "query": """query ListFirewallEvents($zoneTag: string, $filter: FirewallEventsAdaptiveFilter_InputObject) {
                                 viewer {
@@ -110,4 +115,4 @@ with DAG(
         return [{"start": start, "end": end, "zone": zone, "ips": ips, "website": website} for website, zone in web_zones.items()]
 
 
-    extract_data.expand(arguments=test_run()) 
+    extract_data.expand(args=test_run())
