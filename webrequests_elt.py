@@ -23,7 +23,7 @@ with DAG(
         start = args["start"]
         end = args["end"]
         zone = args["zone"]
-        sleep_time = args["sleep"]
+        sleep_time = args["sleep_time"]
         ips = args["ips"]
         website = args["website"]
         mongo_url = Variable.get("mongo_url")
