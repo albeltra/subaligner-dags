@@ -95,7 +95,7 @@ with DAG(
                     proxy_rec = ast.literal_eval(str(proxy_db.get_all(result["clientIP"])))
 
                     if proxy_rec["is_proxy"]:
-                        new_proxy = {("" if k.startswith("proxy") else "proxy_") + k: v for k, v in proxy_rec.items()}
+                        new_proxy = {("" if k.startswith("proxy") or k == "is_proxy" else "proxy_") + k: v for k, v in proxy_rec.items()}
                     else:
                         new_proxy = {"is_proxy": False}
 
