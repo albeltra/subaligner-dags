@@ -19,6 +19,7 @@ with DAG(
         import requests
         import json
         from time import sleep
+        print(args)
         start = args["start"]
         end = args["end"]
         zone = args["zone"]
@@ -69,7 +70,7 @@ with DAG(
         }
         sleep(sleep_time)
         response = requests.post(url, headers=headers, data=json.dumps(data)).json()
-        print(response) 
+        print(response)
         # if 'data' in response:
         #     results = response['data']['viewer']['zones'][0]['firewallEventsAdaptive']
         #     final_results = []
