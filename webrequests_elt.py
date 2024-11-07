@@ -114,12 +114,12 @@ with DAG(
         import requests
         import socket
         end_date = kwargs["dag_run"].execution_date
-        start_date = end_date - timedelta(hours=1)
+        start_date = end_date - timedelta(hours=12)
 
         print(kwargs["dag_run"].start_date)
         print(kwargs["dag_run"].execution_date)
 
-        start = (start_date - timedelta(hours=1)).replace(tzinfo=timezone.utc, microsecond=0)
+        start = start_date.replace(tzinfo=timezone.utc, microsecond=0)
         end = end_date.replace(tzinfo=timezone.utc, microsecond=0)
         web_zones = Variable.get("zones", deserialize_json=True)
         hosts = Variable.get("hosts", deserialize_json=True)
