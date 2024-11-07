@@ -68,7 +68,7 @@ with DAG(
             "X-Auth-Email": f"{email}",
             "X-Auth-Key": f"{api_key}"
         }
-        sleep(sleep_time)
+        # sleep(sleep_time)
         response = requests.post(url, headers=headers, data=json.dumps(data)).json()
         print(response)
         # if 'data' in response:
@@ -118,7 +118,7 @@ with DAG(
             except socket.gaierror:
                 continue
 
-        return [{"start": start, "end": end, "zone": zone, "ips": ips, "website": website, "sleep_time": i*30} for i,(website, zone) in enumerate(web_zones.items())]
+        return [{"start": start, "end": end, "zone": zone, "ips": ips, "website": website, "sleep_time": i * 30} for i, (website, zone) in enumerate(web_zones.items())]
 
 
     extract_data.expand(args=test_run())
