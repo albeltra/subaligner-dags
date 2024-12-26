@@ -118,7 +118,7 @@ data_volume_mounts += [k8s.V1VolumeMount(name="subaligner-audio-subs", mount_pat
 with DAG(
         start_date=datetime(2024, 9, 11),
         catchup=False,
-        schedule_interval="30 7 * * *",
+        #schedule_interval="30 7 * * *",
         dag_id="Batch_Process_Data",
         render_template_as_native_obj=False,
         user_defined_filters={"b64encode": b64encode},
