@@ -7,7 +7,7 @@ from airflow.models import Variable
 with DAG(
         start_date=datetime(2024, 11, 6),
         catchup=True,
-        schedule_interval="0 * * * *",
+        #schedule_interval="0 * * * *",
         dag_id="WebRequests_ELT",
         render_template_as_native_obj=False,
         concurrency=1,
@@ -114,7 +114,7 @@ with DAG(
         import requests
         import socket
         end_date = kwargs["dag_run"].execution_date
-        start_date = end_date - timedelta(hours=1) 
+        start_date = end_date - timedelta(hours=1)
 
         print(kwargs["dag_run"].start_date)
         print(kwargs["dag_run"].execution_date)
