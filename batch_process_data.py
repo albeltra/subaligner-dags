@@ -42,7 +42,7 @@ prefer_io_affinity = k8s.V1Affinity(
         required_during_scheduling_ignored_during_execution=k8s.V1NodeSelector(
             node_selector_terms=[k8s.V1NodeSelectorTerm(match_expressions=[
                 k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="NotIn",
-                                              values=["compute-worker-lean"])]
+                                              values=["compute-master-lean"])]
             )
             ]
         ),
@@ -71,18 +71,18 @@ network_weighted_prefer_compute_affinity = k8s.V1Affinity(
         preferred_during_scheduling_ignored_during_execution=[
             k8s.V1PreferredSchedulingTerm(weight=100, preference=k8s.V1NodeSelectorTerm(match_expressions=[
                 k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In",
-                                              values=["compute-worker-lean"])])
+                                              values=["compute-master-lean"])])
                                           ),
             k8s.V1PreferredSchedulingTerm(weight=25, preference=k8s.V1NodeSelectorTerm(match_expressions=[
-                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-opnsense"])])
+                k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In", values=["compute-master-fentanyl"])])
                                           ),
             k8s.V1PreferredSchedulingTerm(weight=50, preference=k8s.V1NodeSelectorTerm(match_expressions=[
                 k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In",
-                                              values=["compute-worker-fentanyl"])])
+                                              values=["compute-worker-morphine"])])
                                           ),
             k8s.V1PreferredSchedulingTerm(weight=50, preference=k8s.V1NodeSelectorTerm(match_expressions=[
                 k8s.V1NodeSelectorRequirement(key="kubernetes.io/hostname", operator="In",
-                                              values=["compute-worker-fentanyl-3090"])])
+                                              values=["compute-worker-morphine"])])
                                           )
         ]
     )
