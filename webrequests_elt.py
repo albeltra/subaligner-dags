@@ -11,6 +11,7 @@ with DAG(
         dag_id="WebRequests_ELT",
         render_template_as_native_obj=False,
         concurrency=1,
+        owner='airflow',
         max_active_runs=1
 ) as dag:
     @task(task_id="extract_data")
