@@ -5,14 +5,13 @@ from airflow.decorators import task
 from airflow.models import Variable
 
 with DAG(
-        start_date=datetime(2024, 11, 6),
+        start_date=datetime(2025, 4, 25),
         catchup=True,
-        schedule_interval="0 * * * *",
+        schedule="0 * * * *",
         dag_id="WebRequests_ELT",
         render_template_as_native_obj=False,
-        concurrency=1,
-        owner='airflow',
-        max_active_runs=1
+        max_active_tasks=1,
+        max_active_runs=4
 ) as dag:
     @task(task_id="extract_data")
     def extract_data(args):
@@ -76,7 +75,6 @@ with DAG(
             "X-Auth-Key": f"{api_key}"
         }
         response = requests.post(url, headers=headers, data=json.dumps(data)).json()
-        print(response)
         if 'data' in response:
             location_db = IP2Location.IP2Location("/opt/airflow/logs/IP2LOCATION-LITE-DB11.IPV6.BIN", "SHARED_MEMORY")
             proxy_db = IP2Proxy.IP2Proxy("/opt/airflow/logs/IP2PROXY-LITE-PX11.BIN")
@@ -84,15 +82,18 @@ with DAG(
             final_results = []
             for result in results:
                 if result["clientIP"] not in ips:
+                    print(result)
                     result['datetime'] = parser.parse(result['datetime']).astimezone(tz('America/Los_Angeles'))
                     ua = user_agent_parser.Parse(result["userAgent"])
                     for k in ["os", "device", "user_agent"]:
                         result["ua_" + k] = ua[k]["family"]
 
                     location_rec = ast.literal_eval(str(location_db.get_all(result["clientIP"])))
+                    #if location_rec is not None:
                     location_rec['longitude'] = float(location_rec['longitude'])
                     location_rec['latitude'] = float(location_rec['latitude'])
-
+                    #else:
+                    #    location_rec = {"latitude": None, "latitude": None}
                     proxy_rec = ast.literal_eval(str(proxy_db.get_all(result["clientIP"])))
 
                     if proxy_rec["is_proxy"]:
@@ -114,14 +115,14 @@ with DAG(
     def fetch_variables(**kwargs):
         import requests
         import socket
-        end_date = kwargs["dag_run"].execution_date
+        end_date = kwargs["dag_run"].logical_date
         start_date = end_date - timedelta(hours=1)
 
-        print(kwargs["dag_run"].start_date)
-        print(kwargs["dag_run"].execution_date)
+        print(start_date)
+        print(end_date)
 
-        start = start_date.replace(tzinfo=timezone.utc, microsecond=0)
-        end = end_date.replace(tzinfo=timezone.utc, microsecond=0)
+        start = start_date.replace(microsecond=0)
+        end = end_date.replace(microsecond=0)
         web_zones = Variable.get("zones", deserialize_json=True)
         hosts = Variable.get("hosts", deserialize_json=True)
 
